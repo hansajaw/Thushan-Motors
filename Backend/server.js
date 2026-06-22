@@ -794,7 +794,6 @@ app.post('/api/orders', requireAuth, asyncHandler(async (req, res) => {
     console.error('Order save error:', err);
     res.status(500).json({
       message: 'Could not save order.',
-      error: err.message
     });
   } finally {
     connection.release();
