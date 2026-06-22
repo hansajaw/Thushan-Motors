@@ -1316,11 +1316,13 @@ app.get('/api/admin/sales', requireAdmin, asyncHandler(async (req, res) => {
         customerName: o.delivery_name || o.customer_name,
         customerEmail: o.customer_email,
         customerPhone: o.delivery_phone || o.customer_phone || '',
+
         deliveryName: o.delivery_name || '',
         deliveryPhone: o.delivery_phone || '',
         deliveryAddress: o.delivery_address || '',
         deliveryDistrict: o.delivery_district || '',
         deliveryNotes: o.delivery_notes || '',
+
         status: o.status,
         subtotal: Number(o.subtotal || o.total),
         discount: Number(o.discount || 0),
