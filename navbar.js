@@ -18,7 +18,7 @@
   <nav class="navbar">
     <a class="nav-logo" href="index.html">
       <div class="logo-mark">
-        <img src="images/Logo/tmLogo.png" alt="Thushan Motors Logo">
+        <img src="Images/Logo/tmLogo.png" alt="Thushan Motors Logo">
       </div>
       <div class="brand-name"><span>THUSHAN</span> MOTORS</div>
     </a>
