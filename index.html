@@ -94,43 +94,64 @@
     </div>
   </div>
 
-  <div class="review-write-box" id="reviewFormBox">
-    <div>
-      <h3>Write a Review</h3>
-      <p>Share your experience with Thushan Motors.</p>
+  <div class="reviews-highlight-grid" id="reviewsGrid">
+    <div class="reviews-loading">Loading customer reviews...</div>
+  </div>
+
+  <div class="review-action-row">
+    <h3>Do you also want to give us feedback?</h3>
+    <p>Your honest feedback helps other riders trust Thushan Motors.</p>
+
+    <button class="review-open-btn" onclick="openReviewForm()">
+      Write Us <i class="fa-solid fa-pen-to-square"></i>
+    </button>
+  </div>
+
+  <div class="review-write-box hidden" id="reviewFormBox">
+    <button class="review-form-close" onclick="closeReviewForm()" aria-label="Close review form">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+
+    <div class="review-form-head">
+      <div class="review-form-icon">
+        <i class="fa-solid fa-star"></i>
+      </div>
+
+      <h3>Write Your Feedback</h3>
+      <p>Rate your experience and tell us what you think.</p>
     </div>
 
-    <div class="review-form-grid">
-      <select id="reviewRating">
-        <option value="5">★★★★★ 5 Stars</option>
-        <option value="4">★★★★☆ 4 Stars</option>
-        <option value="3">★★★☆☆ 3 Stars</option>
-        <option value="2">★★☆☆☆ 2 Stars</option>
-        <option value="1">★☆☆☆☆ 1 Star</option>
-      </select>
+    <div class="modern-rating-box">
+      <span>Your Rating</span>
 
-      <input type="text" id="reviewLocation" placeholder="Your city, e.g. Panadura">
+      <div class="star-rating-input" id="reviewStarInput">
+        <button type="button" onclick="setReviewRating(1)" aria-label="1 star">
+          <i class="fa-regular fa-star"></i>
+        </button>
+        <button type="button" onclick="setReviewRating(2)" aria-label="2 stars">
+          <i class="fa-regular fa-star"></i>
+        </button>
+        <button type="button" onclick="setReviewRating(3)" aria-label="3 stars">
+          <i class="fa-regular fa-star"></i>
+        </button>
+        <button type="button" onclick="setReviewRating(4)" aria-label="4 stars">
+          <i class="fa-regular fa-star"></i>
+        </button>
+        <button type="button" onclick="setReviewRating(5)" aria-label="5 stars">
+          <i class="fa-regular fa-star"></i>
+        </button>
+      </div>
 
-      <select id="reviewTag">
-        <option value="Spare Parts Order">Spare Parts Order</option>
-        <option value="Customer Support">Customer Support</option>
-        <option value="Fast Delivery">Fast Delivery</option>
-        <option value="Online Shopping">Online Shopping</option>
-        <option value="Customer Feedback">Customer Feedback</option>
-      </select>
+      <strong id="selectedRatingText">5 Stars</strong>
     </div>
 
-    <textarea id="reviewMessage" placeholder="Write your honest review..." maxlength="500"></textarea>
+    <textarea id="reviewMessage" placeholder="Write your honest feedback here..." maxlength="500"></textarea>
 
     <button class="review-submit-btn" onclick="submitReview()">
-      Submit Review <i class="fa-solid fa-paper-plane"></i>
+      Submit Feedback <i class="fa-solid fa-paper-plane"></i>
     </button>
 
     <p class="review-login-note" id="reviewLoginNote"></p>
-  </div>
-
-  <div class="reviews-highlight-grid" id="reviewsGrid">
-    <div class="reviews-loading">Loading customer reviews...</div>
   </div>
 </section>
 

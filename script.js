@@ -24,6 +24,8 @@ let pendingVerifyEmail = '';
    in admin" instantly show up on the real shop pages: both sides talk
    to the same MySQL table, nobody reads from localStorage anymore.
 ── */
+let selectedReviewRating = 5;
+
 let products = [];
 
 /* Loads products from the real backend/database. Called once on page
@@ -1738,6 +1740,67 @@ function renderStars(rating){
   return html;
 }
 
+function setReviewRating(rating){
+  selectedReviewRating = Number(rating || 5);
+
+  const starBox = $('reviewStarInput');
+  const text = $('selectedRatingText');
+
+  if(starBox){
+    const buttons = starBox.querySelectorAll('button');
+
+    buttons.forEach(function(btn, index){
+      const icon = btn.querySelector('i');
+
+      if(icon){
+        icon.className = index < selectedReviewRating
+          ? 'fa-solid fa-star'
+          : 'fa-regular fa-star';
+      }
+
+      btn.classList.toggle('active', index < selectedReviewRating);
+    });
+  }
+
+  if(text){
+    text.textContent = selectedReviewRating + ' Star' + (selectedReviewRating === 1 ? '' : 's');
+  }
+}
+
+function openReviewForm(){
+  const user = getCurrentUser();
+
+  if(!user){
+    openLogin();
+    showToast('Please login to write a feedback.');
+    return;
+  }
+
+  const box = $('reviewFormBox');
+
+  if(box){
+    box.classList.remove('hidden');
+    setReviewRating(selectedReviewRating || 5);
+    updateReviewFormState();
+
+    setTimeout(function(){
+      box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+      if($('reviewMessage')){
+        $('reviewMessage').focus();
+      }
+    }, 100);
+  }
+}
+
+function closeReviewForm(){
+  const box = $('reviewFormBox');
+
+  if(box){
+    box.classList.add('hidden');
+  }
+}
+
 async function loadReviewsSummary(){
   if(!$('reviewsAvg') || !$('reviewsCount') || !$('reviewsStars')){
     return;
@@ -1792,7 +1855,7 @@ async function loadReviewsFromServer(){
             <div class="review-avatar">${escapeHTML(firstLetter)}</div>
             <div>
               <h4>${escapeHTML(review.name || 'Customer')}</h4>
-              <span>${escapeHTML(review.location || 'Sri Lanka')}</span>
+              <span>Verified Customer</span>
             </div>
           </div>
 
@@ -1801,10 +1864,6 @@ async function loadReviewsFromServer(){
           </div>
 
           <p>${escapeHTML(review.message)}</p>
-
-          <div class="review-tag">
-            <i class="fa-solid fa-circle-check"></i> ${escapeHTML(review.tag || 'Customer Feedback')}
-          </div>
         </div>
       `;
     }).join('');
@@ -1823,14 +1882,13 @@ async function loadReviewsFromServer(){
 function updateReviewFormState(){
   const user = getCurrentUser();
   const note = $('reviewLoginNote');
-  const box = $('reviewFormBox');
 
-  if(!box || !note){
+  if(!note){
     return;
   }
 
   if(!user){
-    note.innerHTML = 'Please <a onclick="openLogin()">login</a> to write a real customer review.';
+    note.innerHTML = 'Please <a onclick="openLogin()">login</a> to write real feedback.';
   }else{
     note.textContent = 'Posting as ' + (user.name || 'Customer');
   }
@@ -1841,7 +1899,7 @@ async function submitReview(){
 
   if(!user){
     openLogin();
-    showToast('Please login to write a review.');
+    showToast('Please login to write feedback.');
     return;
   }
 
@@ -1849,13 +1907,10 @@ async function submitReview(){
 
   if(!token){
     openLogin();
-    showToast('Please login again to submit your review.');
+    showToast('Please login again to submit your feedback.');
     return;
   }
 
-  const rating = $('reviewRating') ? $('reviewRating').value : '5';
-  const location = $('reviewLocation') ? $('reviewLocation').value.trim() : '';
-  const tag = $('reviewTag') ? $('reviewTag').value : 'Customer Feedback';
   const message = $('reviewMessage') ? $('reviewMessage').value.trim() : '';
 
   if(message.length < 10){
@@ -1871,17 +1926,15 @@ async function submitReview(){
         'Authorization': 'Bearer ' + token
       },
       body: JSON.stringify({
-        rating,
-        location,
-        tag,
-        message
+        rating: selectedReviewRating,
+        message: message
       })
     });
 
     const data = await res.json();
 
     if(!res.ok){
-      showToast('❌ ' + (data.message || 'Could not submit review.'));
+      showToast('❌ ' + (data.message || 'Could not submit feedback.'));
       return;
     }
 
@@ -1889,11 +1942,9 @@ async function submitReview(){
       $('reviewMessage').value = '';
     }
 
-    if($('reviewLocation')){
-      $('reviewLocation').value = '';
-    }
+    closeReviewForm();
 
-    showToast('<i class="fa-solid fa-circle-check" style="color:var(--red)"></i> Review added. Thank you!');
+    showToast('<i class="fa-solid fa-circle-check" style="color:var(--red)"></i> Feedback added. Thank you!');
 
     await loadReviewsSummary();
     await loadReviewsFromServer();
@@ -2248,7 +2299,8 @@ window.onload = async function(){
     }
   }
 
-    updateReviewFormState();
+  updateReviewFormState();
+  setReviewRating(5);
   await loadReviewsSummary();
   await loadReviewsFromServer();
 
