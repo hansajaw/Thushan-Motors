@@ -12,7 +12,7 @@
 const API_BASE =
   window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:3000'
-    : 'https://https://thushan-motors.vercel.app';
+    : 'https://thushan-motors.vercel.app';
 
 /* ── PRODUCTS DATA ──
    IMPORTANT: products now come from the REAL database via the backend
