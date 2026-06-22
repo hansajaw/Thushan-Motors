@@ -1,0 +1,6 @@
+.env
+Backend/.env
+*.env
+
+!.env.example
+!Backend/.env.example

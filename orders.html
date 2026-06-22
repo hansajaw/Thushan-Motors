@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>My Orders - Thushan Motors</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div id="navbar-container"></div>
+
+<section class="orders-section">
+  <div class="orders-wrapper">
+
+    <div class="orders-top">
+      <div>
+        <div class="eyebrow">Customer Area</div>
+        <h1>My <span>Orders</span></h1>
+        <p style="color:var(--muted)">
+          View your Thushan Motors online receipts and order details.
+        </p>
+      </div>
+
+      <button class="btn-red" onclick="location.href='shop.html'" style="padding:12px 22px;border-radius:10px">
+        <i class="fa-solid fa-shop"></i> Continue Shopping
+      </button>
+    </div>
+
+    <div id="ordersList"></div>
+
+  </div>
+</section>
+
+<div id="footer-container"></div>
+
+<script src="navbar.js"></script>
+<script src="footer.js"></script>
+<script src="script.js"></script>
+
+</body>
+</html>

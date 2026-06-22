@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+<title>Shop Spare Parts – Thushan Motors</title>
+</head>
+<body>
+
+<div id="navbar-container"></div>
+
+<main class="page active" id="page-shop">
+  <section>
+    <div class="shop-header">
+      <div><h2>Shop Spare Parts</h2><p>Filter by brand, category, price, and stock. Sort and search instantly.</p></div>
+      <div class="item-count"><i class="fa-solid fa-cubes-stacked"></i><span><strong id="shopCount">0</strong> items</span><button class="clear-btn" onclick="clearFilters()"><i class="fa-solid fa-xmark"></i> Clear</button></div>
+    </div>
+    <div class="shop-layout">
+      <aside class="shop-sidebar">
+        <h3><i class="fa-solid fa-sliders" style="color:var(--red)"></i> Filters</h3>
+        <div class="filter-group"><label for="shopSearch">Search</label><input type="text" id="shopSearch" placeholder="Enter part name, brand..." onkeyup="applyFilters()"></div>
+        <div class="filter-group"><label for="shopCategory">Category</label><select id="shopCategory" onchange="applyFilters()"><option value="all">All Categories</option><option value="engine">Engine</option><option value="electrical">Electrical</option><option value="tyres">Tyres</option><option value="accessories">Accessories</option><option value="lights">Lights</option><option value="suspension">Suspension</option></select></div>
+        <div class="filter-group"><label for="shopBrand">Brand</label><select id="shopBrand" onchange="applyFilters()"><option value="all">All Brands</option><option value="Honda">Honda</option><option value="Yamaha">Yamaha</option><option value="TVS">TVS</option><option value="Bajaj">Bajaj</option><option value="Hero">Hero</option></select></div>
+        <div class="filter-group"><label for="shopPrice">Max Price (LKR)</label><input type="range" id="shopPrice" min="500" max="50000" value="50000" oninput="updatePriceLabel(); applyFilters()"><div class="price-range-labels"><span>Rs. 500</span><span>Rs. <span id="priceLabel">50,000</span></span></div></div>
+        <div class="filter-group"><div class="toggle-row"><label for="shopInStock" style="margin:0">In-stock only</label><label class="toggle"><input type="checkbox" id="shopInStock" onchange="applyFilters()"><span class="toggle-slider"></span></label></div></div>
+        <div class="filter-group"><label for="shopSort">Sort By</label><select id="shopSort" onchange="applyFilters()"><option value="featured">Featured</option><option value="price-asc">Price: Low to High</option><option value="price-desc">Price: High to Low</option><option value="name">Name A–Z</option></select></div>
+        <button class="apply-filters-btn" onclick="applyFilters()"><i class="fa-solid fa-filter"></i> Apply Filters</button>
+      </aside>
+      <div class="shop-main"><div class="product-grid" id="shopProducts"></div></div>
+    </div>
+  </section>
+</main>
+
+
+<div id="footer-container"></div>
+
+<script src="navbar.js"></script>
+<script src="footer.js"></script>
+<script src="script.js"></script>
+</body>
+</html>

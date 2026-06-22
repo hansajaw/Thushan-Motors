@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+
+<title>Contact Us – Thushan Motors</title>
+</head>
+
+<body>
+
+<div id="navbar-container"></div>
+
+<main class="page active" id="page-contact">
+
+  <section style="background:var(--red);padding:80px 5% 72px;text-align:center">
+    <div style="font-family:'Montserrat',sans-serif;font-size:clamp(32px,4.5vw,52px);font-weight:900;color:#fff;margin-bottom:12px">
+      Contact Thushan Motors
+    </div>
+
+    <p style="color:rgba(255,255,255,0.85);font-size:16px">
+      Need spare parts or support? Contact us directly.
+    </p>
+  </section>
+
+  <section>
+    <div class="contact-grid">
+
+    <div class="contact-info">
+
+  <a
+    href="tel:+94382244155"
+    class="contact-item"
+    style="text-decoration:none;color:inherit">
+    <div class="contact-icon">
+      <i class="fa-solid fa-phone"></i>
+    </div>
+
+    <div>
+      <strong>Hotline</strong>
+      <span>+94 38 224 4155</span>
+    </div>
+  </a>
+
+  <a
+    href="https://wa.me/94700000000?text=Hello%20Thushan%20Motors%2C%20I%20need%20motorcycle%20spare%20parts."
+    target="_blank"
+    rel="noopener"
+    class="contact-item"
+    style="text-decoration:none;color:inherit">
+    <div class="contact-icon">
+      <i class="fa-brands fa-whatsapp"></i>
+    </div>
+
+    <div>
+      <strong>WhatsApp</strong>
+      <span>+94 70 000 0000</span>
+    </div>
+  </a>
+
+  <a
+    href="mailto:support@thushanmotors.lk?subject=Spare%20Parts%20Inquiry%20-%20Thushan%20Motors"
+    class="contact-item"
+    style="text-decoration:none;color:inherit">
+    <div class="contact-icon">
+      <i class="fa-solid fa-envelope"></i>
+    </div>
+
+    <div>
+      <strong>Email</strong>
+      <span>support@thushanmotors.lk</span>
+    </div>
+  </a>
+
+  <a
+    href="https://www.google.com/maps/search/?api=1&query=Thushan%20Motors%20Panadura%20Sri%20Lanka"
+    target="_blank"
+    rel="noopener"
+    class="contact-item"
+    style="text-decoration:none;color:inherit">
+    <div class="contact-icon">
+      <i class="fa-solid fa-location-dot"></i>
+    </div>
+
+    <div>
+      <strong>Location</strong>
+      <span>Panadura, Sri Lanka</span>
+    </div>
+  </a>
+
+  <div
+    class="contact-item contact-click"
+    onclick="openHoursPopup()"
+    role="button"
+    tabindex="0"
+    onkeydown="if(event.key==='Enter') openHoursPopup()">
+    <div class="contact-icon">
+      <i class="fa-solid fa-clock"></i>
+    </div>
+
+    <div>
+      <strong>Business Hours</strong>
+      <span>Mon - Sat: 8:00 AM – 7:00 PM</span>
+    </div>
+  </div>
+
+</div>
+
+      <div class="contact-form-box">
+        <h3>
+          <i class="fa-regular fa-comment-dots" style="color:var(--red)"></i>
+          Send a Message
+        </h3>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Name</label>
+            <input type="text" id="contactName" placeholder="Your name">
+          </div>
+
+          <div class="form-group">
+            <label>Phone</label>
+            <input type="text" id="contactPhone" placeholder="+94 XXX XXXX">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="contactEmail" placeholder="you@example.com">
+        </div>
+
+        <div class="form-group">
+          <label>Message</label>
+          <textarea id="contactMessage" placeholder="How can we help you?"></textarea>
+        </div>
+
+        <button class="submit-btn" onclick="sendMessage()">
+          Send Message <i class="fa-solid fa-paper-plane"></i>
+        </button>
+      </div>
+
+    </div>
+  </section>
+
+  <section style="padding-top:20px">
+    <div style="max-width:1200px;margin:auto">
+      <div style="text-align:center;margin-bottom:26px">
+        <div class="eyebrow">Find Us</div>
+        <h2 style="font-family:'Montserrat',sans-serif;font-size:34px;font-weight:900;margin-bottom:8px">
+          Visit <span style="color:var(--red)">Thushan Motors</span>
+        </h2>
+        <p style="color:var(--muted)">
+          Click the map to open our location in Google Maps.
+        </p>
+      </div>
+
+      <div style="border-radius:22px;overflow:hidden;border:1px solid var(--border);box-shadow:0 14px 38px rgba(0,0,0,0.10)">
+        <iframe
+          src="https://www.google.com/maps?q=Thushan%20Motors%20Panadura%20Sri%20Lanka&output=embed"
+          width="100%"
+          height="420"
+          style="border:0;display:block"
+          allowfullscreen=""
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade">
+        </iframe>
+      </div>
+
+      <div style="text-align:center;margin-top:18px">
+        <a
+          href="https://www.google.com/maps/search/?api=1&query=Thushan%20Motors%20Panadura%20Sri%20Lanka"
+          target="_blank"
+          rel="noopener"
+          class="submit-btn"
+          style="display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;width:auto;padding:14px 26px">
+          <i class="fa-solid fa-map-location-dot"></i>
+          Open Location in Google Maps
+        </a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- BUSINESS HOURS POPUP -->
+<div class="hours-popup-overlay" id="hoursPopupOverlay" onclick="closeHoursPopup()"></div>
+
+<div class="hours-popup" id="hoursPopup">
+  <button class="hours-close" onclick="closeHoursPopup()">
+    <i class="fa-solid fa-xmark"></i>
+  </button>
+
+  <div class="hours-popup-head">
+    <div class="hours-popup-icon">
+      <i class="fa-solid fa-clock"></i>
+    </div>
+
+    <h2>Business Hours</h2>
+    <p>Thushan Motors weekly opening hours</p>
+  </div>
+
+  <div class="hours-list">
+    <div><span>Monday</span><strong>8:00 AM – 7:00 PM</strong></div>
+    <div><span>Tuesday</span><strong>8:00 AM – 7:00 PM</strong></div>
+    <div><span>Wednesday</span><strong>8:00 AM – 7:00 PM</strong></div>
+    <div><span>Thursday</span><strong>8:00 AM – 7:00 PM</strong></div>
+    <div><span>Friday</span><strong>8:00 AM – 7:00 PM</strong></div>
+    <div><span>Saturday</span><strong>8:00 AM – 7:00 PM</strong></div>
+    <div><span>Sunday</span><strong>8:00 AM – 7:00 PM</strong></div>
+  </div>
+</div>
+
+<div id="footer-container"></div>
+
+<script>
+function openHoursPopup(){
+  document.getElementById('hoursPopupOverlay').classList.add('active');
+  document.getElementById('hoursPopup').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeHoursPopup(){
+  document.getElementById('hoursPopupOverlay').classList.remove('active');
+  document.getElementById('hoursPopup').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Escape'){
+    closeHoursPopup();
+  }
+});
+</script>
+<script src="navbar.js"></script>
+<script src="footer.js"></script>
+<script src="script.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,16 @@
+module.exports = [
+  { id: 1, name: 'Brake Pad Set', brand: 'Honda', category: 'engine', price: 4500, oldPrice: null, stock: true, featured: true, img: 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=500', freeDelivery: false },
+  { id: 2, name: 'Motorcycle Chain', brand: 'Yamaha', category: 'accessories', price: 7900, oldPrice: null, stock: true, featured: true, img: 'https://images.unsplash.com/photo-1558981359-219d6364c9c8?w=500', freeDelivery: false },
+  { id: 3, name: 'LED Headlight', brand: 'TVS', category: 'electrical', price: 5800, oldPrice: null, stock: true, featured: true, img: 'https://images.unsplash.com/photo-1609630875171-b1321377ee65?w=500', freeDelivery: true },
+  { id: 4, name: 'Engine Oil 10W-40', brand: 'Honda', category: 'engine', price: 3200, oldPrice: null, stock: true, featured: true, img: 'https://images.unsplash.com/photo-1517846693594-1567da72af75?w=500', freeDelivery: false },
+  { id: 5, name: 'Apache RTR Signal Lamps Rear Left', brand: 'TVS', category: 'lights', price: 1200, oldPrice: null, stock: true, featured: false, img: 'https://images.unsplash.com/photo-1619771914272-7b0de4de0f4f?w=500', freeDelivery: false },
+  { id: 6, name: 'Apache RTR Signal Lamps Front Left', brand: 'TVS', category: 'lights', price: 1200, oldPrice: null, stock: true, featured: false, img: 'https://images.unsplash.com/photo-1619771914272-7b0de4de0f4f?w=500', freeDelivery: false },
+  { id: 7, name: 'Motorcycle Battery 12V', brand: 'Bajaj', category: 'electrical', price: 9900, oldPrice: null, stock: true, featured: false, img: 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=500', freeDelivery: false },
+  { id: 8, name: 'Front Tyre 90/90-17', brand: 'Hero', category: 'tyres', price: 12500, oldPrice: null, stock: true, featured: false, img: 'https://images.unsplash.com/photo-1580310614729-ccd69652491d?w=500', freeDelivery: false },
+  { id: 9, name: 'Rear Tyre 90/90-17', brand: 'Bajaj', category: 'tyres', price: 14500, oldPrice: 17500, stock: true, featured: false, img: 'https://images.unsplash.com/photo-1580310614729-ccd69652491d?w=500', freeDelivery: false },
+  { id: 10, name: 'Tyre 90/90-17', brand: 'Yamaha', category: 'tyres', price: 16250, oldPrice: 19750, stock: true, featured: false, img: 'https://images.unsplash.com/photo-1580310614729-ccd69652491d?w=500', freeDelivery: false },
+  { id: 11, name: 'Full Exhaust System', brand: 'KTM', category: 'engine', price: 28000, oldPrice: 34000, stock: true, featured: false, img: 'https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=500', freeDelivery: true },
+  { id: 12, name: 'Rear Shock Absorber', brand: 'Honda', category: 'suspension', price: 8500, oldPrice: null, stock: false, featured: false, img: 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=500', freeDelivery: false },
+  { id: 13, name: 'Full Face Helmet', brand: null, category: 'accessories', price: 18500, oldPrice: null, stock: true, featured: false, img: 'https://images.unsplash.com/photo-1558981359-219d6364c9c8?w=500', freeDelivery: true },
+  { id: 14, name: 'Carburetor Assembly', brand: 'Yamaha', category: 'engine', price: 6800, oldPrice: null, stock: true, featured: false, img: 'https://images.unsplash.com/photo-1609630875171-b1321377ee65?w=500', freeDelivery: false }
+];

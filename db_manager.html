@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Thushan Motors — Database Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --red:#CC1111;--red-dk:#900;--red-dim:rgba(204,17,17,.12);
+  --bg:#0d0f14;--bg2:#141720;--bg3:#1c2030;--bg4:#242840;
+  --border:#2a2f4a;--border2:#3a3f5a;
+  --text:#e8ecf4;--text2:#9aa3be;--text3:#6b7494;
+  --green:#22c55e;--green-bg:rgba(34,197,94,.1);
+  --blue:#3b82f6;--blue-bg:rgba(59,130,246,.1);
+  --gold:#f0a500;--gold-bg:rgba(240,165,0,.1);
+  --purple:#a855f7;--purple-bg:rgba(168,85,247,.1);
+  --r:10px;--rlg:14px;
+}
+body{font-family:'Open Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+h1,h2,h3,strong{font-family:'Montserrat',sans-serif}
+a{text-decoration:none;color:var(--red)}
+
+/* ── TOPBAR ── */
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;height:58px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:50}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{width:36px;height:36px;background:var(--red);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;color:#fff;font-family:'Montserrat',sans-serif}
+.logo-text strong{font-size:14px;font-weight:800}
+.logo-text span{font-size:11px;color:var(--text3);display:block}
+.topbar-sep{width:1px;height:28px;background:var(--border);margin:0 4px}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+
+/* ── LAYOUT ── */
+.wrap{max-width:1100px;margin:0 auto;padding:24px 20px}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:4px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--rlg);padding:5px;margin-bottom:22px;flex-wrap:wrap}
+.tab{padding:9px 18px;border-radius:var(--r);font-size:13px;font-weight:700;font-family:'Montserrat',sans-serif;cursor:pointer;color:var(--text2);border:none;background:none;display:flex;align-items:center;gap:7px;transition:all .15s}
+.tab:hover{color:var(--text);background:var(--bg3)}
+.tab.active{background:var(--red);color:#fff}
+.tab-badge{background:rgba(255,255,255,.2);color:#fff;font-size:10px;padding:1px 6px;border-radius:10px}
+.tab:not(.active) .tab-badge{background:var(--bg3);color:var(--text3)}
+
+/* ── CARDS ── */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rlg);overflow:hidden;margin-bottom:18px}
+.card-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.card-header h2{font-size:14px;font-weight:700;flex:1}
+.card-body{padding:18px}
+
+/* ── BUTTONS ── */
+.btn{padding:8px 15px;border-radius:var(--r);font-size:12.5px;font-weight:700;border:none;display:inline-flex;align-items:center;gap:7px;cursor:pointer;transition:all .15s;font-family:'Montserrat',sans-serif}
+.btn-red{background:var(--red);color:#fff}.btn-red:hover{background:var(--red-dk)}
+.btn-green{background:var(--green);color:#052010}.btn-green:hover{filter:brightness(1.1)}
+.btn-blue{background:var(--blue);color:#fff}.btn-blue:hover{filter:brightness(1.1)}
+.btn-gold{background:var(--gold);color:#1a0e00}.btn-gold:hover{filter:brightness(1.1)}
+.btn-ghost{background:var(--bg3);border:1px solid var(--border2);color:var(--text2)}.btn-ghost:hover{color:var(--text);border-color:var(--red)}
+.btn-danger{background:rgba(239,68,68,.12);color:#ef4444;border:1px solid rgba(239,68,68,.3)}.btn-danger:hover{background:rgba(239,68,68,.2)}
+.btn-sm{padding:6px 11px;font-size:11.5px}
+.btn-xs{padding:4px 8px;font-size:11px}
+.btn-icon{width:31px;height:31px;padding:0;justify-content:center;border-radius:8px}
+
+/* ── STATS ── */
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px}
+.stat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rlg);padding:16px;position:relative;overflow:hidden}
+.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.stat.red::before{background:var(--red)}.stat.green::before{background:var(--green)}
+.stat.blue::before{background:var(--blue)}.stat.gold::before{background:var(--gold)}.stat.purple::before{background:var(--purple)}
+.stat-icon{font-size:20px;margin-bottom:8px}
+.stat-label{font-size:11px;color:var(--text3);margin-bottom:3px}
+.stat-value{font-size:22px;font-weight:800;font-family:'Montserrat',sans-serif}
+
+/* ── TABLE ── */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;padding:9px 12px;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);border-bottom:1px solid var(--border);white-space:nowrap;background:var(--bg3)}
+td{padding:9px 12px;border-bottom:1px solid var(--border);font-size:12.5px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.018)}
+.mono{font-family:monospace;font-size:11.5px;color:var(--text2)}
+.fw7{font-weight:700}
+.muted{color:var(--text3)}
+
+/* ── BADGE ── */
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:10.5px;font-weight:700;gap:4px;white-space:nowrap}
+.badge.green{background:var(--green-bg);color:var(--green)}
+.badge.red{background:rgba(239,68,68,.12);color:#ef4444}
+.badge.gold{background:var(--gold-bg);color:var(--gold)}
+.badge.blue{background:var(--blue-bg);color:var(--blue)}
+.badge.purple{background:var(--purple-bg);color:var(--purple)}
+
+/* ── FORM ── */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.form-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px}
+.fg{margin-bottom:12px}
+.fg label{display:block;font-size:11.5px;font-weight:700;color:var(--text2);margin-bottom:5px}
+.inp,.sel{background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:8px 11px;border-radius:var(--r);font-size:13px;outline:none;font-family:'Open Sans',sans-serif;width:100%}
+.inp:focus,.sel:focus{border-color:var(--red)}
+.inp-sm{padding:5px 9px;font-size:12px}
+textarea.inp{resize:vertical;min-height:60px}
+.checkbox-row{display:flex;gap:14px;flex-wrap:wrap}
+.chk{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--text2);cursor:pointer}
+.chk input{width:14px;height:14px;accent-color:var(--red)}
+.img-preview{width:100%;height:110px;border-radius:var(--r);object-fit:cover;background:var(--bg3);margin-top:7px;border:1px solid var(--border2)}
+
+/* ── MODAL ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;align-items:center;justify-content:center;padding:16px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rlg);width:100%;max-width:560px;max-height:90vh;overflow-y:auto}
+.modal.wide{max-width:720px}
+.modal-hdr{padding:15px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.modal-hdr h3{font-size:14.5px;font-weight:700;flex:1}
+.modal-body{padding:20px}
+.modal-ftr{padding:13px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:9px}
+
+/* ── JSON EDITOR ── */
+.json-editor{background:var(--bg);border:1px solid var(--border2);border-radius:var(--r);padding:14px;font-family:monospace;font-size:12.5px;color:#a8d8a8;min-height:300px;resize:vertical;width:100%;outline:none;line-height:1.6}
+.json-editor:focus{border-color:var(--red)}
+
+/* ── SEARCH ── */
+.search-box{position:relative}
+.search-box i{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:12px}
+.search-box input{padding-left:30px}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:22px;right:22px;background:var(--bg4);border:1px solid var(--border2);color:var(--text);padding:12px 17px;border-radius:var(--r);font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:9px;transform:translateY(20px);opacity:0;transition:all .25s;z-index:999;pointer-events:none;box-shadow:0 6px 24px rgba(0,0,0,.4)}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success i{color:var(--green)}
+.toast.error i{color:#ef4444}
+.toast.info i{color:var(--blue)}
+
+/* ── BACKUP SECTION ── */
+.backup-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.backup-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--rlg);padding:18px}
+.backup-card h3{font-size:13px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.backup-card p{font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.6}
+.backup-actions{display:flex;flex-direction:column;gap:8px}
+
+/* ── INFO BOX ── */
+.info-box{background:var(--blue-bg);border:1px solid rgba(59,130,246,.25);border-radius:var(--r);padding:13px 16px;font-size:12.5px;color:var(--text2);display:flex;gap:10px;align-items:flex-start;line-height:1.6}
+.info-box i{color:var(--blue);margin-top:1px;flex-shrink:0}
+.warn-box{background:var(--gold-bg);border:1px solid rgba(240,165,0,.25);border-radius:var(--r);padding:13px 16px;font-size:12.5px;color:var(--text2);display:flex;gap:10px;align-items:flex-start;line-height:1.6;margin-bottom:14px}
+.warn-box i{color:var(--gold);margin-top:1px;flex-shrink:0}
+
+/* ── PAGES ── */
+.page{display:none}.page.active{display:block}
+
+/* ── THUMB ── */
+.thumb{width:36px;height:36px;border-radius:7px;object-fit:cover;background:var(--bg3)}
+
+/* ── INLINE EDIT ── */
+.inline-inp{background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:4px 8px;border-radius:6px;font-size:12px;outline:none;font-family:'Open Sans',sans-serif}
+.inline-inp:focus{border-color:var(--red)}
+
+/* ── EMPTY ── */
+.empty{padding:48px 20px;text-align:center;color:var(--text3)}
+.empty i{font-size:30px;display:block;margin-bottom:10px;opacity:.5}
+
+@media(max-width:700px){
+  .form-row,.form-row3{grid-template-columns:1fr}
+  .tabs{gap:3px}
+  .tab{padding:8px 12px;font-size:12px}
+  .topbar{padding:0 14px}
+  .wrap{padding:16px 12px}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">
+    <div class="logo-icon">TM</div>
+    <div class="logo-text"><strong>Thushan Motors</strong><span>Database Manager</span></div>
+  </div>
+  <div class="topbar-sep"></div>
+  <span style="font-size:12px;color:var(--text3)"><i class="fa-solid fa-database" style="color:var(--red);margin-right:5px"></i>localStorage</span>
+  <div class="topbar-right">
+    <button class="btn btn-ghost btn-sm" onclick="refreshAll()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+    <a href="admin.html" class="btn btn-red btn-sm"><i class="fa-solid fa-shield-halved"></i> Admin Panel</a>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('products',this)"><i class="fa-solid fa-box"></i> Products <span class="tab-badge" id="tb-products">0</span></button>
+    <button class="tab" onclick="switchTab('sales',this)"><i class="fa-solid fa-receipt"></i> Sales <span class="tab-badge" id="tb-sales">0</span></button>
+    <button class="tab" onclick="switchTab('customers',this)"><i class="fa-solid fa-users"></i> Customers <span class="tab-badge" id="tb-customers">0</span></button>
+    <button class="tab" onclick="switchTab('suppliers',this)"><i class="fa-solid fa-truck"></i> Suppliers <span class="tab-badge" id="tb-suppliers">0</span></button>
+    <button class="tab" onclick="switchTab('backup',this)"><i class="fa-solid fa-cloud-arrow-up"></i> Backup / Import</button>
+    <button class="tab" onclick="switchTab('rawedit',this)"><i class="fa-solid fa-code"></i> Raw JSON</button>
+  </div>
+
+  <!-- ═══ PRODUCTS ═══ -->
+  <div class="page active" id="page-products">
+    <div class="stats-row" id="prod-stats"></div>
+    <div class="card">
+      <div class="card-header">
+        <h2><i class="fa-solid fa-box" style="color:var(--red)"></i> Products</h2>
+        <div class="search-box"><i class="fa-solid fa-search"></i><input class="inp inp-sm" style="width:180px;padding-left:28px" id="prod-search" placeholder="Search..." oninput="renderProducts()"></div>
+        <select class="sel inp-sm" style="width:140px" id="prod-cat-filter" onchange="renderProducts()"><option value="">All Categories</option></select>
+        <button class="btn btn-red btn-sm" onclick="openProdModal()"><i class="fa-solid fa-plus"></i> Add Product</button>
+      </div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th></th><th>Name</th><th>Part No.</th><th>Category</th><th>Brand</th><th>Buy / Sell</th><th>Stock</th><th>Featured</th><th>Actions</th></tr></thead>
+        <tbody id="prod-tbody"></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- ═══ SALES ═══ -->
+  <div class="page" id="page-sales">
+    <div class="stats-row" id="sales-stats"></div>
+    <div class="card">
+      <div class="card-header">
+        <h2><i class="fa-solid fa-receipt" style="color:var(--gold)"></i> Sales History</h2>
+        <div class="search-box"><i class="fa-solid fa-search"></i><input class="inp inp-sm" style="width:180px;padding-left:28px" id="sales-search" placeholder="Search invoice / customer..." oninput="renderSales()"></div>
+        <input class="inp inp-sm" type="date" id="sales-date" onchange="renderSales()">
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('sales-date').value='';renderSales()">Clear</button>
+      </div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Invoice</th><th>Date</th><th>Customer</th><th>Items</th><th>Discount</th><th>Total</th><th>Payment</th><th>Actions</th></tr></thead>
+        <tbody id="sales-tbody"></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- ═══ CUSTOMERS ═══ -->
+  <div class="page" id="page-customers">
+    <div class="stats-row" id="cust-stats"></div>
+    <div class="card">
+      <div class="card-header">
+        <h2><i class="fa-solid fa-users" style="color:var(--blue)"></i> Customers</h2>
+        <div class="search-box"><i class="fa-solid fa-search"></i><input class="inp inp-sm" style="width:180px;padding-left:28px" id="cust-search" placeholder="Search..." oninput="renderCustomers()"></div>
+        <button class="btn btn-blue btn-sm" onclick="openCustModal()"><i class="fa-solid fa-user-plus"></i> Add Customer</button>
+      </div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Address</th><th>Total Spent</th><th>Actions</th></tr></thead>
+        <tbody id="cust-tbody"></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- ═══ SUPPLIERS ═══ -->
+  <div class="page" id="page-suppliers">
+    <div class="card">
+      <div class="card-header">
+        <h2><i class="fa-solid fa-truck" style="color:var(--purple)"></i> Suppliers</h2>
+        <div class="search-box"><i class="fa-solid fa-search"></i><input class="inp inp-sm" style="width:180px;padding-left:28px" id="sup-search" placeholder="Search..." oninput="renderSuppliers()"></div>
+        <button class="btn btn-ghost btn-sm" style="border-color:var(--purple);color:var(--purple)" onclick="openSupModal()"><i class="fa-solid fa-plus"></i> Add Supplier</button>
+      </div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Address</th><th>Notes</th><th>Products</th><th>Actions</th></tr></thead>
+        <tbody id="sup-tbody"></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- ═══ BACKUP / IMPORT ═══ -->
+  <div class="page" id="page-backup">
+    <div class="warn-box"><i class="fa-solid fa-triangle-exclamation"></i><div><strong>Important:</strong> Data eka browser localStorage ෙකෙහි store වෙනවා. Browser clear/reset කළාම data නැති වෙනවා. Regular backups download කරන්නකෝ.</div></div>
+    <div class="backup-grid">
+      <div class="backup-card">
+        <h3><i class="fa-solid fa-cloud-arrow-down" style="color:var(--green)"></i> Export / Backup</h3>
+        <p>සියලු data JSON file ෙකක් ලෙස download කරන්නකෝ. ඕනෑ ෙවෙලාවෙකෙදි import කරන්නත් පුළුවන්.</p>
+        <div class="backup-actions">
+          <button class="btn btn-green" onclick="exportAll()"><i class="fa-solid fa-download"></i> Full Backup Download (JSON)</button>
+          <button class="btn btn-ghost" onclick="exportTable('products')"><i class="fa-solid fa-box"></i> Products Only</button>
+          <button class="btn btn-ghost" onclick="exportTable('sales')"><i class="fa-solid fa-receipt"></i> Sales Only</button>
+          <button class="btn btn-ghost" onclick="exportCSV()"><i class="fa-solid fa-file-csv"></i> Products → CSV Export</button>
+        </div>
+      </div>
+      <div class="backup-card">
+        <h3><i class="fa-solid fa-cloud-arrow-up" style="color:var(--blue)"></i> Import / Restore</h3>
+        <p>Previously exported JSON file ෙකක් import කරන්නකෝ. Existing data replace වෙනවා.</p>
+        <div class="backup-actions">
+          <label class="btn btn-blue" style="cursor:pointer"><i class="fa-solid fa-upload"></i> JSON File Import <input type="file" accept=".json" style="display:none" onchange="importJSON(event)"></label>
+          <button class="btn btn-ghost" onclick="exportTemplate()"><i class="fa-solid fa-file-code"></i> Empty Template Download</button>
+        </div>
+      </div>
+      <div class="backup-card">
+        <h3><i class="fa-solid fa-rotate-left" style="color:var(--gold)"></i> Reset</h3>
+        <p>Demo products සහ default data ෙකලවෙරෙ restore කරන්නකෝ. Sales, customers දිගෙ‍ ද reset වෙනවා.</p>
+        <div class="backup-actions">
+          <button class="btn btn-gold" onclick="resetToDemo()"><i class="fa-solid fa-star"></i> Demo Data Reset</button>
+          <button class="btn btn-danger" onclick="nukeAll()"><i class="fa-solid fa-trash"></i> All Data Delete (Danger!)</button>
+        </div>
+      </div>
+      <div class="backup-card">
+        <h3><i class="fa-solid fa-circle-info" style="color:var(--blue)"></i> Database Info</h3>
+        <p>Browser localStorage ෙකෙහි store වූ data ගැන info:</p>
+        <div id="db-info" style="font-size:12px;color:var(--text2);line-height:2"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ RAW JSON EDITOR ═══ -->
+  <div class="page" id="page-rawedit">
+    <div class="info-box" style="margin-bottom:14px"><i class="fa-solid fa-code"></i><div>Raw JSON directly edit කරන්නකෝ. Valid JSON ෙකක් danne. Changes save කරන්නකෝ.</div></div>
+    <div class="card">
+      <div class="card-header">
+        <h2>Select Table</h2>
+        <select class="sel inp-sm" style="width:160px" id="raw-table-sel" onchange="loadRawJSON()">
+          <option value="thushanProducts">Products</option>
+          <option value="thushanSales">Sales</option>
+          <option value="thushanCustomers">Customers</option>
+          <option value="thushanSuppliers">Suppliers</option>
+          <option value="thushanUsers">Users</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" onclick="loadRawJSON()"><i class="fa-solid fa-rotate"></i> Reload</button>
+        <button class="btn btn-green btn-sm" onclick="saveRawJSON()"><i class="fa-solid fa-floppy-disk"></i> Save JSON</button>
+        <button class="btn btn-ghost btn-sm" onclick="formatJSON()"><i class="fa-solid fa-indent"></i> Format</button>
+      </div>
+      <div class="card-body">
+        <textarea class="json-editor" id="raw-editor" rows="25" spellcheck="false"></textarea>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /wrap -->
+
+<!-- ═══ PRODUCT MODAL ═══ -->
+<div class="modal-overlay" id="modal-prod">
+<div class="modal">
+  <div class="modal-hdr"><h3 id="prod-modal-title">Add Product</h3><button class="btn btn-ghost btn-icon" onclick="closeModal('modal-prod')"><i class="fa-solid fa-xmark"></i></button></div>
+  <div class="modal-body">
+    <input type="hidden" id="pm-id">
+    <div class="fg"><label>Product Name *</label><input class="inp" id="pm-name" placeholder="e.g. Brake Pad Set"></div>
+    <div class="form-row">
+      <div class="fg"><label>Part Number</label><input class="inp" id="pm-pn" placeholder="auto if blank"></div>
+      <div class="fg"><label>Brand</label><input class="inp" id="pm-brand" placeholder="Honda, Yamaha..."></div>
+    </div>
+    <div class="form-row">
+      <div class="fg"><label>Category *</label>
+        <select class="sel" id="pm-cat">
+          <option value="engine">Engine</option>
+          <option value="electrical">Electrical</option>
+          <option value="lights">Lights</option>
+          <option value="tyres">Tyres</option>
+          <option value="accessories">Accessories</option>
+          <option value="suspension">Suspension</option>
+        </select>
+      </div>
+      <div class="fg"><label>Supplier</label><select class="sel" id="pm-sup"><option value="">— None —</option></select></div>
+    </div>
+    <div class="form-row3">
+      <div class="fg"><label>Buy Price (Rs.)</label><input class="inp" type="number" id="pm-buy" placeholder="0"></div>
+      <div class="fg"><label>Sell Price (Rs.) *</label><input class="inp" type="number" id="pm-sell" placeholder="0"></div>
+      <div class="fg"><label>Old Price (Rs.)</label><input class="inp" type="number" id="pm-old" placeholder="optional"></div>
+    </div>
+    <div class="form-row3">
+      <div class="fg"><label>Stock Qty *</label><input class="inp" type="number" id="pm-qty" placeholder="0"></div>
+      <div class="fg"><label>Min Stock</label><input class="inp" type="number" id="pm-min" placeholder="3"></div>
+      <div class="fg"><label>Unit</label><input class="inp" id="pm-unit" placeholder="pcs / ltr / set"></div>
+    </div>
+    <div class="fg">
+      <label>Image URL</label>
+      <input class="inp" id="pm-img" placeholder="https://..." oninput="document.getElementById('pm-prev').src=this.value">
+      <img class="img-preview" id="pm-prev" src="" onerror="this.style.opacity=.3">
+    </div>
+    <div class="fg"><label>Options</label>
+      <div class="checkbox-row">
+        <label class="chk"><input type="checkbox" id="pm-feat"> Featured (Home Page)</label>
+        <label class="chk"><input type="checkbox" id="pm-free"> Free Delivery</label>
+      </div>
+    </div>
+  </div>
+  <div class="modal-ftr">
+    <button class="btn btn-ghost" onclick="closeModal('modal-prod')">Cancel</button>
+    <button class="btn btn-red" onclick="saveProduct()"><i class="fa-solid fa-floppy-disk"></i> Save Product</button>
+  </div>
+</div>
+</div>
+
+<!-- ═══ CUSTOMER MODAL ═══ -->
+<div class="modal-overlay" id="modal-cust">
+<div class="modal">
+  <div class="modal-hdr"><h3 id="cust-modal-title">Add Customer</h3><button class="btn btn-ghost btn-icon" onclick="closeModal('modal-cust')"><i class="fa-solid fa-xmark"></i></button></div>
+  <div class="modal-body">
+    <input type="hidden" id="cm-id">
+    <div class="fg"><label>Full Name *</label><input class="inp" id="cm-name"></div>
+    <div class="form-row">
+      <div class="fg"><label>Phone</label><input class="inp" id="cm-phone"></div>
+      <div class="fg"><label>Email</label><input class="inp" id="cm-email"></div>
+    </div>
+    <div class="fg"><label>Address</label><textarea class="inp" id="cm-address" rows="2"></textarea></div>
+  </div>
+  <div class="modal-ftr">
+    <button class="btn btn-ghost" onclick="closeModal('modal-cust')">Cancel</button>
+    <button class="btn btn-blue" onclick="saveCustomer()"><i class="fa-solid fa-floppy-disk"></i> Save Customer</button>
+  </div>
+</div>
+</div>
+
+<!-- ═══ SUPPLIER MODAL ═══ -->
+<div class="modal-overlay" id="modal-sup">
+<div class="modal">
+  <div class="modal-hdr"><h3 id="sup-modal-title">Add Supplier</h3><button class="btn btn-ghost btn-icon" onclick="closeModal('modal-sup')"><i class="fa-solid fa-xmark"></i></button></div>
+  <div class="modal-body">
+    <input type="hidden" id="sm-id">
+    <div class="fg"><label>Supplier / Company Name *</label><input class="inp" id="sm-name"></div>
+    <div class="form-row">
+      <div class="fg"><label>Phone</label><input class="inp" id="sm-phone"></div>
+      <div class="fg"><label>Email</label><input class="inp" id="sm-email"></div>
+    </div>
+    <div class="fg"><label>Address</label><textarea class="inp" id="sm-address" rows="2"></textarea></div>
+    <div class="fg"><label>Notes</label><textarea class="inp" id="sm-notes" rows="2" placeholder="What products this supplier provides..."></textarea></div>
+  </div>
+  <div class="modal-ftr">
+    <button class="btn btn-ghost" onclick="closeModal('modal-sup')">Cancel</button>
+    <button class="btn btn-ghost" style="border-color:var(--purple);color:var(--purple)" onclick="saveSupplier()"><i class="fa-solid fa-floppy-disk"></i> Save Supplier</button>
+  </div>
+</div>
+</div>
+
+<!-- ═══ INVOICE MODAL ═══ -->
+<div class="modal-overlay" id="modal-invoice">
+<div class="modal wide">
+  <div class="modal-hdr"><h3>Invoice</h3><button class="btn btn-ghost btn-icon" onclick="closeModal('modal-invoice')"><i class="fa-solid fa-xmark"></i></button></div>
+  <div class="modal-body" id="invoice-body" style="background:#fff;color:#111;border-radius:8px"></div>
+  <div class="modal-ftr"><button class="btn btn-ghost" onclick="closeModal('modal-invoice')">Close</button><button class="btn btn-red" onclick="window.print()"><i class="fa-solid fa-print"></i> Print</button></div>
+</div>
+</div>
+
+<div class="toast" id="toast"><i class="fa-solid fa-circle-check"></i><span id="toast-msg"></span></div>
+
+<script>
+/* ── KEYS ── */
+const K={P:'thushanProducts',S:'thushanSales',C:'thushanCustomers',SUP:'thushanSuppliers',U:'thushanUsers'};
+
+/* ── DEFAULT DATA ── */
+const DEF_PRODUCTS=[
+  {id:1,name:'Brake Pad Set',partNumber:'PN-0001',brand:'Honda',category:'engine',buyPrice:3150,price:4500,oldPrice:null,stockQty:10,minStock:3,unit:'pcs',stock:true,featured:true,img:'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=500',freeDelivery:false,supplierId:1},
+  {id:2,name:'Motorcycle Chain',partNumber:'PN-0002',brand:'Yamaha',category:'accessories',buyPrice:5530,price:7900,oldPrice:null,stockQty:8,minStock:3,unit:'pcs',stock:true,featured:true,img:'https://images.unsplash.com/photo-1558981359-219d6364c9c8?w=500',freeDelivery:false,supplierId:null},
+  {id:3,name:'LED Headlight',partNumber:'PN-0003',brand:'TVS',category:'electrical',buyPrice:4060,price:5800,oldPrice:null,stockQty:5,minStock:2,unit:'pcs',stock:true,featured:true,img:'https://images.unsplash.com/photo-1609630875171-b1321377ee65?w=500',freeDelivery:true,supplierId:null},
+  {id:4,name:'Engine Oil 10W-40',partNumber:'PN-0004',brand:'Honda',category:'engine',buyPrice:2240,price:3200,oldPrice:null,stockQty:20,minStock:5,unit:'ltr',stock:true,featured:true,img:'https://images.unsplash.com/photo-1517846693594-1567da72af75?w=500',freeDelivery:false,supplierId:1},
+  {id:5,name:'Apache RTR Signal Lamps Rear Left',partNumber:'PN-0005',brand:'TVS',category:'lights',buyPrice:840,price:1200,oldPrice:null,stockQty:12,minStock:4,unit:'pcs',stock:true,featured:false,img:'https://images.unsplash.com/photo-1619771914272-7b0de4de0f4f?w=500',freeDelivery:false,supplierId:null},
+  {id:6,name:'Apache RTR Signal Lamps Front Left',partNumber:'PN-0006',brand:'TVS',category:'lights',buyPrice:840,price:1200,oldPrice:null,stockQty:10,minStock:4,unit:'pcs',stock:true,featured:false,img:'https://images.unsplash.com/photo-1619771914272-7b0de4de0f4f?w=500',freeDelivery:false,supplierId:null},
+  {id:7,name:'Motorcycle Battery 12V',partNumber:'PN-0007',brand:'Bajaj',category:'electrical',buyPrice:6930,price:9900,oldPrice:null,stockQty:4,minStock:2,unit:'pcs',stock:true,featured:false,img:'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=500',freeDelivery:false,supplierId:null},
+  {id:8,name:'Front Tyre 90/90-17',partNumber:'PN-0008',brand:'Hero',category:'tyres',buyPrice:8750,price:12500,oldPrice:null,stockQty:6,minStock:2,unit:'pcs',stock:true,featured:false,img:'https://images.unsplash.com/photo-1580310614729-ccd69652491d?w=500',freeDelivery:false,supplierId:2},
+  {id:9,name:'Rear Tyre 90/90-17',partNumber:'PN-0009',brand:'Bajaj',category:'tyres',buyPrice:10150,price:14500,oldPrice:17500,stockQty:5,minStock:2,unit:'pcs',stock:true,featured:false,img:'https://images.unsplash.com/photo-1580310614729-ccd69652491d?w=500',freeDelivery:false,supplierId:2},
+  {id:10,name:'Tyre 90/90-17',partNumber:'PN-0010',brand:'Yamaha',category:'tyres',buyPrice:11375,price:16250,oldPrice:19750,stockQty:3,minStock:2,unit:'pcs',stock:true,featured:false,img:'https://images.unsplash.com/photo-1580310614729-ccd69652491d?w=500',freeDelivery:false,supplierId:2},
+  {id:11,name:'Full Exhaust System',partNumber:'PN-0011',brand:'KTM',category:'engine',buyPrice:19600,price:28000,oldPrice:34000,stockQty:2,minStock:1,unit:'pcs',stock:true,featured:false,img:'https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=500',freeDelivery:true,supplierId:1},
+  {id:12,name:'Rear Shock Absorber',partNumber:'PN-0012',brand:'Honda',category:'suspension',buyPrice:5950,price:8500,oldPrice:null,stockQty:0,minStock:2,unit:'pcs',stock:false,featured:false,img:'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=500',freeDelivery:false,supplierId:1},
+  {id:13,name:'Full Face Helmet',partNumber:'PN-0013',brand:null,category:'accessories',buyPrice:12950,price:18500,oldPrice:null,stockQty:7,minStock:3,unit:'pcs',stock:true,featured:false,img:'https://images.unsplash.com/photo-1558981359-219d6364c9c8?w=500',freeDelivery:true,supplierId:null},
+  {id:14,name:'Carburetor Assembly',partNumber:'PN-0014',brand:'Yamaha',category:'engine',buyPrice:4760,price:6800,oldPrice:null,stockQty:3,minStock:2,unit:'pcs',stock:true,featured:false,img:'https://images.unsplash.com/photo-1609630875171-b1321377ee65?w=500',freeDelivery:false,supplierId:1},
+];
+const DEF_SUPPLIERS=[
+  {id:1,name:'Colombo Auto Parts (Pvt) Ltd',phone:'011-2345678',email:'sales@colomboauto.lk',address:'Pettah, Colombo 11',notes:'Engine parts & oils'},
+  {id:2,name:'Kandy Spares Distributors',phone:'081-2233445',email:'info@kandyspares.lk',address:'Kandy Road, Kandy',notes:'Tyres & suspension parts'},
+];
+const DEF_CUSTOMERS=[
+  {id:1,name:'Nimal Perera',phone:'077-1234567',email:'nimal@example.com',address:'Kurunegala',createdAt:Date.now()},
+  {id:2,name:'Saman Kumara',phone:'071-9876543',email:'',address:'Negombo',createdAt:Date.now()},
+];
+const DEF_USERS=[{id:1,name:'Thushan Silva',username:'thushan',role:'admin',phone:'070-0000000',active:true}];
+
+/* ── STORAGE ── */
+function ld(k,fb){try{const v=localStorage.getItem(k);if(v){const p=JSON.parse(v);if(Array.isArray(p))return p;}}catch(e){}localStorage.setItem(k,JSON.stringify(fb));return fb.slice();}
+function sv(k,d){localStorage.setItem(k,JSON.stringify(d));}
+function fmt(n){return'Rs. '+Number(n||0).toLocaleString('en-LK',{minimumFractionDigits:0,maximumFractionDigits:2})}
+function esc(s){return String(s==null?'':s).replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function cap(s){return s?s.charAt(0).toUpperCase()+s.slice(1):''}
+
+let products,sales,customers,suppliers,users;
+
+function loadAll(){
+  products=ld(K.P,DEF_PRODUCTS);
+  sales=ld(K.S,[]);
+  customers=ld(K.C,DEF_CUSTOMERS);
+  suppliers=ld(K.SUP,DEF_SUPPLIERS);
+  users=ld(K.U,DEF_USERS);
+  updateBadges();
+}
+
+function updateBadges(){
+  document.getElementById('tb-products').textContent=products.length;
+  document.getElementById('tb-sales').textContent=sales.length;
+  document.getElementById('tb-customers').textContent=customers.length;
+  document.getElementById('tb-suppliers').textContent=suppliers.length;
+}
+
+/* ── TOAST ── */
+let tTimer;
+function toast(msg,type='success'){
+  const t=document.getElementById('toast');
+  t.className='toast show '+(type);
+  const ic=t.querySelector('i');
+  ic.className=type==='error'?'fa-solid fa-circle-exclamation':type==='info'?'fa-solid fa-circle-info':'fa-solid fa-circle-check';
+  document.getElementById('toast-msg').textContent=msg;
+  clearTimeout(tTimer);tTimer=setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+/* ── TABS ── */
+function switchTab(name,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  if(name==='products'){renderProducts();renderProdStats();}
+  if(name==='sales'){renderSales();renderSalesStats();}
+  if(name==='customers'){renderCustomers();renderCustStats();}
+  if(name==='suppliers')renderSuppliers();
+  if(name==='backup')renderDBInfo();
+  if(name==='rawedit')loadRawJSON();
+}
+
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+
+/* ── PRODUCTS ── */
+function supName(id){const s=suppliers.find(x=>x.id===id);return s?s.name:'—'}
+
+function renderProdStats(){
+  const total=products.length;
+  const inStock=products.filter(p=>p.stockQty>0).length;
+  const low=products.filter(p=>p.stockQty>0&&p.stockQty<=p.minStock).length;
+  const out=products.filter(p=>p.stockQty<=0).length;
+  const val=products.reduce((s,p)=>s+p.price*(p.stockQty||0),0);
+  document.getElementById('prod-stats').innerHTML=`
+    <div class="stat red"><div class="stat-icon">📦</div><div class="stat-label">Total Products</div><div class="stat-value">${total}</div></div>
+    <div class="stat green"><div class="stat-icon">✅</div><div class="stat-label">In Stock</div><div class="stat-value">${inStock}</div></div>
+    <div class="stat gold"><div class="stat-icon">⚠️</div><div class="stat-label">Low Stock</div><div class="stat-value">${low}</div></div>
+    <div class="stat" style="--r:red"><div class="stat-icon">❌</div><div class="stat-label">Out of Stock</div><div class="stat-value">${out}</div></div>
+    <div class="stat purple"><div class="stat-icon">💰</div><div class="stat-label">Inventory Value</div><div class="stat-value" style="font-size:16px">${fmt(val)}</div></div>`;
+}
+
+function renderProducts(){
+  const q=(document.getElementById('prod-search').value||'').toLowerCase();
+  const cat=document.getElementById('prod-cat-filter').value;
+  const cats=[...new Set(products.map(p=>p.category))];
+  const sel=document.getElementById('prod-cat-filter');
+  const cur=sel.value;
+  sel.innerHTML='<option value="">All Categories</option>'+cats.map(c=>`<option value="${c}">${cap(c)}</option>`).join('');
+  sel.value=cur;
+
+  let list=products.filter(p=>{
+    if(q&&!p.name.toLowerCase().includes(q)&&!(p.brand||'').toLowerCase().includes(q)&&!(p.partNumber||'').toLowerCase().includes(q))return false;
+    if(cat&&p.category!==cat)return false;
+    return true;
+  });
+
+  document.getElementById('prod-tbody').innerHTML=list.length?list.map(p=>`
+    <tr>
+      <td><img class="thumb" src="${esc(p.img||'')}" onerror="this.style.opacity=.2"></td>
+      <td><div class="fw7">${esc(p.name)}</div><div class="muted" style="font-size:11px">${esc(p.brand||'No brand')}</div></td>
+      <td class="mono">${esc(p.partNumber||'—')}</td>
+      <td><span class="badge blue">${cap(p.category)}</span></td>
+      <td>${p.brand?esc(p.brand):'<span class="muted">—</span>'}</td>
+      <td>${fmt(p.buyPrice||0)} / <span style="color:var(--gold);font-weight:700">${fmt(p.price)}</span>${p.oldPrice?`<div class="muted" style="text-decoration:line-through;font-size:10.5px">${fmt(p.oldPrice)}</div>`:''}</td>
+      <td class="${p.stockQty<=0?'':'p.stockQty<=p.minStock?'gold':''} fw7">${p.stockQty||0} ${p.unit||'pcs'}
+        ${p.stockQty<=0?'<span class="badge red">Out</span>':p.stockQty<=(p.minStock||3)?'<span class="badge gold">Low</span>':'<span class="badge green">OK</span>'}
+      </td>
+      <td>${p.featured?'<span class="badge gold"><i class="fa-solid fa-star"></i> Yes</span>':'<span class="muted">—</span>'}</td>
+      <td>
+        <div style="display:flex;gap:5px">
+          <button class="btn btn-ghost btn-sm btn-icon" onclick="openProdModal(${p.id})" title="Edit"><i class="fa-solid fa-pen"></i></button>
+          <button class="btn btn-danger btn-sm btn-icon" onclick="delProduct(${p.id})" title="Delete"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      </td>
+    </tr>`).join(''):`<tr><td colspan="9"><div class="empty"><i class="fa-solid fa-box"></i>No products found</div></td></tr>`;
+}
+
+function fillSupSel(selId, val=''){
+  const sel=document.getElementById(selId);
+  sel.innerHTML='<option value="">— None —</option>'+suppliers.map(s=>`<option value="${s.id}"${s.id==val?' selected':''}>${esc(s.name)}</option>`).join('');
+}
+
+function openProdModal(id){
+  fillSupSel('pm-sup');
+  const pm=document.getElementById('modal-prod');
+  if(id){
+    const p=products.find(x=>x.id===id); if(!p)return;
+    document.getElementById('prod-modal-title').textContent='Edit Product';
+    document.getElementById('pm-id').value=p.id;
+    document.getElementById('pm-name').value=p.name;
+    document.getElementById('pm-pn').value=p.partNumber||'';
+    document.getElementById('pm-brand').value=p.brand||'';
+    document.getElementById('pm-cat').value=p.category;
+    document.getElementById('pm-sup').value=p.supplierId||'';
+    document.getElementById('pm-buy').value=p.buyPrice||'';
+    document.getElementById('pm-sell').value=p.price;
+    document.getElementById('pm-old').value=p.oldPrice||'';
+    document.getElementById('pm-qty').value=p.stockQty||0;
+    document.getElementById('pm-min').value=p.minStock||3;
+    document.getElementById('pm-unit').value=p.unit||'pcs';
+    document.getElementById('pm-img').value=p.img||'';
+    document.getElementById('pm-prev').src=p.img||'';
+    document.getElementById('pm-feat').checked=!!p.featured;
+    document.getElementById('pm-free').checked=!!p.freeDelivery;
+  }else{
+    document.getElementById('prod-modal-title').textContent='Add Product';
+    ['pm-id','pm-name','pm-pn','pm-brand','pm-img'].forEach(x=>document.getElementById(x).value='');
+    document.getElementById('pm-prev').src='';
+    document.getElementById('pm-cat').value='engine';
+    document.getElementById('pm-sup').value='';
+    document.getElementById('pm-buy').value='';
+    document.getElementById('pm-sell').value='';
+    document.getElementById('pm-old').value='';
+    document.getElementById('pm-qty').value=10;
+    document.getElementById('pm-min').value=3;
+    document.getElementById('pm-unit').value='pcs';
+    document.getElementById('pm-feat').checked=false;
+    document.getElementById('pm-free').checked=false;
+  }
+  pm.classList.add('open');
+}
+
+function saveProduct(){
+  const name=document.getElementById('pm-name').value.trim();
+  const price=parseFloat(document.getElementById('pm-sell').value);
+  const qty=parseInt(document.getElementById('pm-qty').value);
+  if(!name){toast('Product name danna!','error');return;}
+  if(!price||price<=0){toast('Valid sell price ekak danna!','error');return;}
+  if(isNaN(qty)||qty<0){toast('Valid stock qty ekak danna!','error');return;}
+  const idV=document.getElementById('pm-id').value;
+  const oldP=document.getElementById('pm-old').value;
+  const data={
+    name, brand:document.getElementById('pm-brand').value.trim()||null,
+    category:document.getElementById('pm-cat').value,
+    supplierId:document.getElementById('pm-sup').value?parseInt(document.getElementById('pm-sup').value):null,
+    buyPrice:parseFloat(document.getElementById('pm-buy').value)||0,
+    price, oldPrice:oldP?parseFloat(oldP):null,
+    stockQty:qty, minStock:parseInt(document.getElementById('pm-min').value)||3,
+    unit:document.getElementById('pm-unit').value.trim()||'pcs',
+    img:document.getElementById('pm-img').value.trim()||'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=500',
+    featured:document.getElementById('pm-feat').checked,
+    freeDelivery:document.getElementById('pm-free').checked,
+    stock:qty>0
+  };
+  if(idV){
+    const i=products.findIndex(p=>p.id===parseInt(idV));
+    const pn=products[i].partNumber;
+    if(i>-1)products[i]={...products[i],...data,partNumber:document.getElementById('pm-pn').value.trim()||pn};
+    toast('Product update wuna ✓');
+  }else{
+    const newId=products.length?Math.max(...products.map(p=>p.id))+1:1;
+    const pn=document.getElementById('pm-pn').value.trim()||'PN-'+String(newId).padStart(4,'0');
+    products.push({id:newId,...data,partNumber:pn});
+    toast('Product add wuna ✓');
+  }
+  sv(K.P,products); closeModal('modal-prod'); renderProducts(); renderProdStats(); updateBadges();
+}
+
+function delProduct(id){
+  const p=products.find(x=>x.id===id); if(!p)return;
+  if(!confirm(`"${p.name}" delete karanna ona ද?`))return;
+  products=products.filter(x=>x.id!==id);
+  sv(K.P,products); renderProducts(); renderProdStats(); updateBadges();
+  toast('Product delete kala');
+}
+
+/* ── SALES ── */
+function renderSalesStats(){
+  const total=sales.reduce((s,x)=>s+x.total,0);
+  const count=sales.length;
+  const today=new Date().toDateString();
+  const todaySales=sales.filter(s=>new Date(s.date).toDateString()===today);
+  const todayAmt=todaySales.reduce((s,x)=>s+x.total,0);
+  document.getElementById('sales-stats').innerHTML=`
+    <div class="stat gold"><div class="stat-icon">🧾</div><div class="stat-label">Total Invoices</div><div class="stat-value">${count}</div></div>
+    <div class="stat green"><div class="stat-icon">💵</div><div class="stat-label">Total Sales</div><div class="stat-value" style="font-size:16px">${fmt(total)}</div></div>
+    <div class="stat blue"><div class="stat-icon">📅</div><div class="stat-label">Today's Sales</div><div class="stat-value" style="font-size:16px">${fmt(todayAmt)}</div></div>
+    <div class="stat red"><div class="stat-icon">📊</div><div class="stat-label">Today Invoices</div><div class="stat-value">${todaySales.length}</div></div>`;
+}
+
+function renderSales(){
+  const q=(document.getElementById('sales-search').value||'').toLowerCase();
+  const df=document.getElementById('sales-date').value;
+  let list=sales.filter(s=>{
+    if(q&&!s.invoiceNo.toLowerCase().includes(q)&&!s.customerName.toLowerCase().includes(q))return false;
+    if(df&&new Date(s.date).toISOString().slice(0,10)!==df)return false;
+    return true;
+  }).sort((a,b)=>b.date-a.date);
+  document.getElementById('sales-tbody').innerHTML=list.length?list.map(s=>`
+    <tr>
+      <td class="mono">${esc(s.invoiceNo)}</td>
+      <td style="font-size:11.5px">${new Date(s.date).toLocaleString()}</td>
+      <td>${esc(s.customerName)}</td>
+      <td>${s.items.length} items</td>
+      <td>${s.discount>0?fmt(s.discount):'—'}</td>
+      <td style="color:var(--gold);font-weight:700">${fmt(s.total)}</td>
+      <td><span class="badge blue">${cap(s.paymentMethod)}</span></td>
+      <td><div style="display:flex;gap:5px">
+        <button class="btn btn-ghost btn-sm btn-icon" onclick="viewInvoice(${s.id})" title="View"><i class="fa-solid fa-eye"></i></button>
+        <button class="btn btn-danger btn-sm btn-icon" onclick="delSale(${s.id})" title="Delete"><i class="fa-solid fa-trash"></i></button>
+      </div></td>
+    </tr>`).join(''):`<tr><td colspan="8"><div class="empty"><i class="fa-solid fa-receipt"></i>No sales found</div></td></tr>`;
+}
+
+function viewInvoice(id){
+  const s=sales.find(x=>x.id===id); if(!s)return;
+  const rows=s.items.map(i=>`<tr><td>${esc(i.name)}</td><td style="text-align:center">${i.qty}</td><td style="text-align:right">Rs.${i.unitPrice.toFixed(2)}</td><td style="text-align:right">Rs.${i.total.toFixed(2)}</td></tr>`).join('');
+  document.getElementById('invoice-body').innerHTML=`<div style="padding:20px;font-family:Arial,sans-serif">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;border-bottom:3px solid #CC1111;padding-bottom:12px">
+      <div><h2 style="color:#CC1111;margin-bottom:3px;font-family:Montserrat,sans-serif">Thushan Motors</h2><div style="font-size:12px;color:#666">Genuine Motorcycle Spare Parts<br>Panadura, Sri Lanka</div></div>
+      <div style="text-align:right"><div style="font-weight:700;font-size:15px">${s.invoiceNo}</div><div style="font-size:12px;color:#666">${new Date(s.date).toLocaleString()}</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;padding:12px;background:#f8f9fa;border-radius:8px">
+      <div><strong>Customer:</strong> ${esc(s.customerName)}</div>
+      <div style="text-align:right"><strong>Payment:</strong> ${cap(s.paymentMethod)}</div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:14px">
+      <thead style="background:#CC1111;color:#fff"><tr><th style="padding:8px;text-align:left">Product</th><th style="padding:8px">Qty</th><th style="padding:8px;text-align:right">Unit Price</th><th style="padding:8px;text-align:right">Total</th></tr></thead>
+      <tbody style="font-size:13px">${rows}</tbody>
+    </table>
+    <div style="text-align:right">
+      <div>Subtotal: <strong>Rs.${s.subtotal.toFixed(2)}</strong></div>
+      ${s.discount>0?`<div>Discount: <strong>Rs.${s.discount.toFixed(2)}</strong></div>`:''}
+      <div style="font-size:20px;font-weight:700;color:#CC1111;margin-top:8px">TOTAL: Rs.${s.total.toFixed(2)}</div>
+    </div>
+    <div style="margin-top:20px;padding-top:10px;border-top:1px solid #ddd;font-size:11px;color:#999;text-align:center">Thank you for your business! • Thushan Motors • Panadura, Sri Lanka</div>
+  </div>`;
+  document.getElementById('modal-invoice').classList.add('open');
+}
+
+function delSale(id){
+  const s=sales.find(x=>x.id===id); if(!s)return;
+  if(!confirm('Mema sale eka delete karanna? Stock eka restore wenawa.'))return;
+  s.items.forEach(i=>{const p=products.find(x=>x.id===i.productId);if(p){p.stockQty+=i.qty;p.stock=p.stockQty>0;}});
+  sv(K.P,products);
+  sales=sales.filter(x=>x.id!==id);
+  sv(K.S,sales); renderSales(); renderSalesStats(); updateBadges();
+  toast('Sale delete kala, stock restore wuna');
+}
+
+/* ── CUSTOMERS ── */
+function renderCustStats(){
+  const top=customers.map(c=>({...c,spent:sales.filter(s=>s.customerId===c.id).reduce((a,s)=>a+s.total,0)})).sort((a,b)=>b.spent-a.spent);
+  const total=top.reduce((s,c)=>s+c.spent,0);
+  document.getElementById('cust-stats').innerHTML=`
+    <div class="stat blue"><div class="stat-icon">👤</div><div class="stat-label">Total Customers</div><div class="stat-value">${customers.length}</div></div>
+    <div class="stat green"><div class="stat-icon">💵</div><div class="stat-label">Total Revenue</div><div class="stat-value" style="font-size:16px">${fmt(total)}</div></div>
+    <div class="stat gold"><div class="stat-icon">🏆</div><div class="stat-label">Top Customer</div><div class="stat-value" style="font-size:14px">${top[0]?esc(top[0].name):'—'}</div></div>`;
+}
+
+function renderCustomers(){
+  const q=(document.getElementById('cust-search').value||'').toLowerCase();
+  let list=customers.filter(c=>!q||c.name.toLowerCase().includes(q)||(c.phone||'').includes(q));
+  document.getElementById('cust-tbody').innerHTML=list.length?list.map(c=>{
+    const spent=sales.filter(s=>s.customerId===c.id).reduce((a,s)=>a+s.total,0);
+    return`<tr>
+      <td class="fw7">${esc(c.name)}</td>
+      <td>${esc(c.phone||'—')}</td>
+      <td>${esc(c.email||'—')}</td>
+      <td>${esc(c.address||'—')}</td>
+      <td style="color:var(--gold);font-weight:700">${fmt(spent)}</td>
+      <td><div style="display:flex;gap:5px">
+        <button class="btn btn-ghost btn-sm btn-icon" onclick="openCustModal(${c.id})"><i class="fa-solid fa-pen"></i></button>
+        <button class="btn btn-danger btn-sm btn-icon" onclick="delCustomer(${c.id})"><i class="fa-solid fa-trash"></i></button>
+      </div></td>
+    </tr>`;
+  }).join(''):`<tr><td colspan="6"><div class="empty"><i class="fa-solid fa-users"></i>No customers</div></td></tr>`;
+}
+
+function openCustModal(id){
+  const m=document.getElementById('modal-cust');
+  if(id){
+    const c=customers.find(x=>x.id===id);if(!c)return;
+    document.getElementById('cust-modal-title').textContent='Edit Customer';
+    document.getElementById('cm-id').value=c.id;
+    document.getElementById('cm-name').value=c.name;
+    document.getElementById('cm-phone').value=c.phone||'';
+    document.getElementById('cm-email').value=c.email||'';
+    document.getElementById('cm-address').value=c.address||'';
+  }else{
+    document.getElementById('cust-modal-title').textContent='Add Customer';
+    ['cm-id','cm-name','cm-phone','cm-email','cm-address'].forEach(x=>document.getElementById(x).value='');
+  }
+  m.classList.add('open');
+}
+
+function saveCustomer(){
+  const name=document.getElementById('cm-name').value.trim();
+  if(!name){toast('Name danna!','error');return;}
+  const idV=document.getElementById('cm-id').value;
+  const data={name,phone:document.getElementById('cm-phone').value.trim(),email:document.getElementById('cm-email').value.trim(),address:document.getElementById('cm-address').value.trim()};
+  if(idV){const i=customers.findIndex(c=>c.id===parseInt(idV));if(i>-1)customers[i]={...customers[i],...data};toast('Customer update wuna ✓');}
+  else{customers.push({id:customers.length?Math.max(...customers.map(c=>c.id))+1:1,...data,createdAt:Date.now()});toast('Customer add wuna ✓');}
+  sv(K.C,customers);closeModal('modal-cust');renderCustomers();updateBadges();
+}
+
+function delCustomer(id){
+  if(!confirm('Customer delete karanna?'))return;
+  customers=customers.filter(c=>c.id!==id);
+  sv(K.C,customers);renderCustomers();updateBadges();toast('Customer delete kala');
+}
+
+/* ── SUPPLIERS ── */
+function renderSuppliers(){
+  const q=(document.getElementById('sup-search').value||'').toLowerCase();
+  let list=suppliers.filter(s=>!q||s.name.toLowerCase().includes(q)||(s.phone||'').includes(q));
+  document.getElementById('sup-tbody').innerHTML=list.length?list.map(s=>{
+    const count=products.filter(p=>p.supplierId===s.id).length;
+    return`<tr>
+      <td class="fw7">${esc(s.name)}</td>
+      <td>${esc(s.phone||'—')}</td>
+      <td>${esc(s.email||'—')}</td>
+      <td>${esc(s.address||'—')}</td>
+      <td style="font-size:11.5px;color:var(--text2)">${esc(s.notes||'—')}</td>
+      <td><span class="badge purple">${count} products</span></td>
+      <td><div style="display:flex;gap:5px">
+        <button class="btn btn-ghost btn-sm btn-icon" onclick="openSupModal(${s.id})"><i class="fa-solid fa-pen"></i></button>
+        <button class="btn btn-danger btn-sm btn-icon" onclick="delSupplier(${s.id})"><i class="fa-solid fa-trash"></i></button>
+      </div></td>
+    </tr>`;
+  }).join(''):`<tr><td colspan="7"><div class="empty"><i class="fa-solid fa-truck"></i>No suppliers</div></td></tr>`;
+}
+
+function openSupModal(id){
+  const m=document.getElementById('modal-sup');
+  if(id){
+    const s=suppliers.find(x=>x.id===id);if(!s)return;
+    document.getElementById('sup-modal-title').textContent='Edit Supplier';
+    document.getElementById('sm-id').value=s.id;
+    document.getElementById('sm-name').value=s.name;
+    document.getElementById('sm-phone').value=s.phone||'';
+    document.getElementById('sm-email').value=s.email||'';
+    document.getElementById('sm-address').value=s.address||'';
+    document.getElementById('sm-notes').value=s.notes||'';
+  }else{
+    document.getElementById('sup-modal-title').textContent='Add Supplier';
+    ['sm-id','sm-name','sm-phone','sm-email','sm-address','sm-notes'].forEach(x=>document.getElementById(x).value='');
+  }
+  m.classList.add('open');
+}
+
+function saveSupplier(){
+  const name=document.getElementById('sm-name').value.trim();
+  if(!name){toast('Supplier name danna!','error');return;}
+  const idV=document.getElementById('sm-id').value;
+  const data={name,phone:document.getElementById('sm-phone').value.trim(),email:document.getElementById('sm-email').value.trim(),address:document.getElementById('sm-address').value.trim(),notes:document.getElementById('sm-notes').value.trim()};
+  if(idV){const i=suppliers.findIndex(s=>s.id===parseInt(idV));if(i>-1)suppliers[i]={...suppliers[i],...data};toast('Supplier update wuna ✓');}
+  else{suppliers.push({id:suppliers.length?Math.max(...suppliers.map(s=>s.id))+1:1,...data});toast('Supplier add wuna ✓');}
+  sv(K.SUP,suppliers);closeModal('modal-sup');renderSuppliers();
+}
+
+function delSupplier(id){
+  if(!confirm('Supplier delete karanna? Products unlink wenawa.'))return;
+  suppliers=suppliers.filter(s=>s.id!==id);
+  products.forEach(p=>{if(p.supplierId===id)p.supplierId=null;});
+  sv(K.SUP,suppliers);sv(K.P,products);renderSuppliers();toast('Supplier delete kala');
+}
+
+/* ── BACKUP ── */
+function renderDBInfo(){
+  const keys=[K.P,K.S,K.C,K.SUP,K.U];
+  let html='';
+  keys.forEach(k=>{
+    const v=localStorage.getItem(k)||'[]';
+    const count=JSON.parse(v).length;
+    const size=(new Blob([v]).size/1024).toFixed(1);
+    const labels={[K.P]:'Products',[K.S]:'Sales',[K.C]:'Customers',[K.SUP]:'Suppliers',[K.U]:'Users'};
+    html+=`<div><i class="fa-solid fa-circle" style="font-size:7px;color:var(--red);margin-right:8px"></i><strong>${labels[k]}:</strong> ${count} records, ${size} KB</div>`;
+  });
+  document.getElementById('db-info').innerHTML=html;
+}
+
+function exportAll(){
+  const data={products,sales,customers,suppliers,users,exportedAt:new Date().toISOString(),version:'1.0'};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`thushan-motors-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();toast('Full backup downloaded ✓');
+}
+
+function exportTable(table){
+  const data=table==='products'?products:sales;
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`thushan-motors-${table}-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();toast(`${cap(table)} exported ✓`);
+}
+
+function exportCSV(){
+  const cols=['id','name','partNumber','brand','category','buyPrice','price','oldPrice','stockQty','minStock','unit','featured','freeDelivery'];
+  const hdr=cols.join(',');
+  const rows=products.map(p=>cols.map(c=>{const v=p[c];return v==null?'':`"${String(v).replace(/"/g,'""')}"`}).join(','));
+  const blob=new Blob([[hdr,...rows].join('\n')],{type:'text/csv'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`thushan-motors-products-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();toast('CSV exported ✓');
+}
+
+function exportTemplate(){
+  const template={products:[],sales:[],customers:[],suppliers:[],users:[{id:1,name:'Admin',username:'admin',role:'admin',phone:'',active:true}]};
+  const blob=new Blob([JSON.stringify(template,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='thushan-motors-template.json';
+  a.click();toast('Template downloaded ✓');
+}
+
+function importJSON(e){
+  const file=e.target.files[0]; if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      const data=JSON.parse(ev.target.result);
+      if(data.products){sv(K.P,data.products);products=data.products;}
+      if(data.sales){sv(K.S,data.sales);sales=data.sales;}
+      if(data.customers){sv(K.C,data.customers);customers=data.customers;}
+      if(data.suppliers){sv(K.SUP,data.suppliers);suppliers=data.suppliers;}
+      if(data.users){sv(K.U,data.users);users=data.users;}
+      updateBadges();renderDBInfo();
+      toast('Import success! Data restore wuna ✓');
+    }catch(err){toast('Invalid JSON file','error');}
+  };
+  reader.readAsText(file);
+  e.target.value='';
+}
+
+function resetToDemo(){
+  if(!confirm('Demo data walata reset karanna ona ද? All data will be replaced.'))return;
+  products=DEF_PRODUCTS.slice();sales=[];customers=DEF_CUSTOMERS.slice();suppliers=DEF_SUPPLIERS.slice();users=DEF_USERS.slice();
+  sv(K.P,products);sv(K.S,sales);sv(K.C,customers);sv(K.SUP,suppliers);sv(K.U,users);
+  updateBadges();renderDBInfo();toast('Demo data reset wuna ✓');
+}
+
+function nukeAll(){
+  if(!confirm('⚠️ ALL data permanently delete wenawa! Continue?'))return;
+  if(!confirm('Really sire? Backup download kala?'))return;
+  [K.P,K.S,K.C,K.SUP,K.U].forEach(k=>localStorage.removeItem(k));
+  loadAll();toast('All data deleted','error');
+}
+
+/* ── RAW JSON EDITOR ── */
+function loadRawJSON(){
+  const k=document.getElementById('raw-table-sel').value;
+  const raw=localStorage.getItem(k)||'[]';
+  document.getElementById('raw-editor').value=JSON.stringify(JSON.parse(raw),null,2);
+}
+
+function saveRawJSON(){
+  const k=document.getElementById('raw-table-sel').value;
+  try{
+    const parsed=JSON.parse(document.getElementById('raw-editor').value);
+    sv(k,parsed);
+    loadAll();
+    toast('JSON saved ✓');
+  }catch(e){toast('Invalid JSON — syntax error','error');}
+}
+
+function formatJSON(){
+  try{
+    const v=document.getElementById('raw-editor').value;
+    document.getElementById('raw-editor').value=JSON.stringify(JSON.parse(v),null,2);
+    toast('Formatted ✓','info');
+  }catch(e){toast('Invalid JSON','error');}
+}
+
+function refreshAll(){loadAll();renderProdStats();renderProducts();toast('Refreshed ✓','info');}
+
+/* ── INIT ── */
+loadAll();
+renderProdStats();
+renderProducts();
+</script>
+</body>
+</html>

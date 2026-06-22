@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+<title>Thushan Motors – Genuine Motorcycle Spare Parts</title>
+</head>
+<body>
+
+<div id="navbar-container"></div>
+
+<main class="page active" id="page-home">
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="hero-tag"><i class="fa-solid fa-circle" style="font-size:6px"></i> Panadura Shop • Islandwide Delivery • Online Orders</div>
+      <h1>Ride Without<br><span>Limits</span></h1>
+      <h2>Motorcycle Spare Parts Delivered Islandwide</h2>
+      <p>Thushan Motors is a local spare parts shop in Panadura, Sri Lanka. Browse, add to cart, and order motorcycle parts online from anywhere in the island.</p>
+      <div class="hero-searchbar">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="heroSearch" placeholder="Search brake pads, tyres, chains..." onkeydown="if(event.key==='Enter') doHeroSearch()">
+        <button onclick="doHeroSearch()">Search Parts &rarr;</button>
+      </div>
+      <div class="hero-btns">
+        <button class="btn-a btn-primary-hero" onclick="location.href='shop.html'"><i class="fa-solid fa-shop"></i> Shop Now</button>
+        <button class="btn-a btn-outline-hero" onclick="location.href='contact.html'"><i class="fa-solid fa-truck"></i> Track / Ask Order</button>
+        <button class="btn-a btn-whatsapp" onclick="location.href='contact.html'"><i class="fab fa-whatsapp"></i> WhatsApp</button>
+      </div>
+      <div class="hero-badges">
+        <div class="hero-badge"><i class="fa-solid fa-store"></i><div><strong>Local Shop</strong><span>Based in Panadura</span></div></div>
+        <div class="hero-badge"><i class="fa-solid fa-truck-fast"></i><div><strong>Fast Delivery</strong><span>Islandwide service</span></div></div>
+        <div class="hero-badge"><i class="fa-solid fa-lock"></i><div><strong>Easy Checkout</strong><span>Cash, bank or card option</span></div></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="stats-bar">
+    <div class="stat-item"><div class="stat-num">2000+</div><div class="stat-label">Parts in Stock</div></div>
+    <div class="stat-item"><div class="stat-num">5000+</div><div class="stat-label">Happy Customers</div></div>
+    <div class="stat-item"><div class="stat-num">25+</div><div class="stat-label">Brands Available</div></div>
+    <div class="stat-item"><div class="stat-num">LK</div><div class="stat-label">Islandwide Delivery</div></div>
+  </div>
+
+  <section style="background:var(--bg2);border-bottom:1px solid var(--border)">
+    <div class="sec-header-row sec-header">
+      <div><div class="eyebrow">Browse by</div><h2>Shop by <span>Category</span></h2><p>Select a category and view matching spare parts.</p></div>
+      <a href="shop.html" class="sec-link">View All Products &rarr;</a>
+    </div>
+    <div class="category-grid">
+      <div class="category-card" onclick="openCategory('engine')"><div class="cat-icon"><i class="fa-solid fa-gears"></i></div><div><h3>Engine Parts</h3><p>Brake pads, engine oil, exhaust, carburetor and more.</p></div></div>
+      <div class="category-card" onclick="openCategory('electrical')"><div class="cat-icon"><i class="fa-solid fa-bolt"></i></div><div><h3>Electrical</h3><p>Battery, wiring, LED headlights and electrical items.</p></div></div>
+      <div class="category-card" onclick="openCategory('tyres')"><div class="cat-icon"><i class="fa-solid fa-circle-dot"></i></div><div><h3>Tyres</h3><p>Front tyres, rear tyres and tyre sets.</p></div></div>
+      <div class="category-card" onclick="openCategory('lights')"><div class="cat-icon"><i class="fa-solid fa-lightbulb"></i></div><div><h3>Lights</h3><p>Signal lamps, headlights, tail lights and bulbs.</p></div></div>
+      <div class="category-card" onclick="openCategory('suspension')"><div class="cat-icon"><i class="fa-solid fa-arrows-up-down"></i></div><div><h3>Suspension</h3><p>Shock absorbers, forks and steering components.</p></div></div>
+      <div class="category-card" onclick="openCategory('accessories')"><div class="cat-icon"><i class="fa-solid fa-screwdriver-wrench"></i></div><div><h3>Accessories</h3><p>Chains, helmets, mirrors and rider accessories.</p></div></div>
+    </div>
+  </section>
+
+  <div class="facilities-bg">
+    <div class="facilities-title">OUR SERVICES</div>
+    <div class="facilities-underline"></div>
+    <div class="facilities-cards">
+      <div class="facility-card"><div class="facility-icon"><i class="fa-solid fa-magnifying-glass-plus"></i></div><h3>Part Finder</h3><p>Search by product name, brand, or category and find the motorcycle parts you need quickly.</p><span class="facility-link" onclick="location.href='shop.html'" style="cursor:pointer">Shop now</span></div>
+      <div class="facility-card"><div class="facility-icon"><i class="fa-solid fa-truck-fast"></i></div><h3>Islandwide Delivery</h3><p>Order from Panadura and receive your spare parts anywhere in Sri Lanka.</p><span class="facility-link" onclick="location.href='contact.html'" style="cursor:pointer">Contact us</span></div>
+      <div class="facility-card"><div class="facility-icon"><i class="fa-solid fa-headset"></i></div><h3>Customer Support</h3><p>Need help choosing the right part? Contact our team before placing your order.</p><span class="facility-link" onclick="location.href='contact.html'" style="cursor:pointer">Ask now</span></div>
+    </div>
+  </div>
+
+  <!-- SHOP BY BRANDS -->
+<section>
+  <div class="sec-header-row sec-header">
+    <div>
+      <div class="eyebrow">Explore by</div>
+      <h2>Shop by <span>Brand</span></h2>
+      <p>Select your motorcycle brand and view matching spare parts.</p>
+    </div>
+    <a href="shop.html" class="sec-link">View All Products &rarr;</a>
+  </div>
+
+  <div class="brand-grid">
+
+    <div class="brand-card" onclick="openBrand('Honda')">
+      <div class="brand-img">
+        <img src="images/brands/honda.png" alt="Honda Logo">
+      </div>
+      <div class="brand-label">Honda</div>
+    </div>
+
+    <div class="brand-card" onclick="openBrand('Yamaha')">
+      <div class="brand-img">
+        <img src="images/brands/yamaha.png" alt="Yamaha Logo">
+      </div>
+      <div class="brand-label">Yamaha</div>
+    </div>
+
+    <div class="brand-card" onclick="openBrand('Bajaj')">
+      <div class="brand-img">
+        <img src="images/brands/bajaj.png" alt="Bajaj Logo">
+      </div>
+      <div class="brand-label">Bajaj</div>
+    </div>
+
+    <div class="brand-card" onclick="openBrand('TVS')">
+      <div class="brand-img">
+        <img src="images/brands/tvs.png" alt="TVS Logo">
+      </div>
+      <div class="brand-label">TVS</div>
+    </div>
+
+    <div class="brand-card" onclick="openBrand('Hero')">
+      <div class="brand-img">
+        <img src="images/brands/hero.png" alt="Hero Logo">
+      </div>
+      <div class="brand-label">Hero</div>
+    </div>
+
+    <div class="brand-card" onclick="openBrand('Suzuki')">
+      <div class="brand-img">
+        <img src="images/brands/suzuki.png" alt="Suzuki Logo">
+      </div>
+      <div class="brand-label">Suzuki</div>
+    </div>
+  </div>
+</section>
+
+  <section style="background:var(--bg2);border-top:1px solid var(--border)">
+    <div class="sec-header"><div class="eyebrow">Best Sellers</div><h2>Featured <span>Products</span></h2><p>Popular spare parts for Sri Lankan riders.</p></div>
+    <div class="product-grid" id="featuredProducts"></div>
+  </section>
+</main>
+
+
+<div id="footer-container"></div>
+
+<script src="navbar.js"></script>
+<script src="footer.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
