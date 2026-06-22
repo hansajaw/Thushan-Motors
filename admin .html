@@ -22,7 +22,7 @@
 body { background: var(--bg); color: var(--text); font-family: 'Open Sans', sans-serif; overflow-x: hidden; }
 h1,h2,h3,h4,h5,h6 { font-family: 'Montserrat', sans-serif; font-weight: 700; }
 
-/* Sidebar */
+
 .sidebar { width: 260px; background: var(--bg2); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: fixed; top: 0; bottom: 0; left: 0; z-index: 100; transition: transform 0.3s ease; overflow-y: auto; }
 .sidebar-brand { padding: 22px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
 .sidebar-brand i { color: var(--red); font-size: 22px; }
@@ -194,7 +194,7 @@ input:checked + .slider:before { transform: translateX(20px); }
   </div>
 </div>
 
-<!-- Order Detail Modal -->
+
 <div class="modal-overlay" id="orderModal">
   <div class="modal-box">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
@@ -231,7 +231,7 @@ input:checked + .slider:before { transform: translateX(20px); }
   <main class="main-content">
     <button class="mobile-toggle" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
 
-    <!-- DASHBOARD -->
+   
     <section id="tab-dashboard" class="tab-content active">
       <div class="header-panel">
         <div class="header-title">
@@ -258,7 +258,7 @@ input:checked + .slider:before { transform: translateX(20px); }
       </div>
     </section>
 
-    <!-- POS -->
+    
     <section id="tab-pos" class="tab-content">
       <div class="header-panel">
         <div class="header-title"><h1>POS Billing</h1><p>Counter sales terminal.</p></div>
@@ -291,7 +291,7 @@ input:checked + .slider:before { transform: translateX(20px); }
       </div>
     </section>
 
-    <!-- PRODUCTS -->
+   
     <section id="tab-products" class="tab-content">
       <div class="header-panel">
         <div class="header-title"><h1>Products Inventory</h1><p>Manage the live product catalog.</p></div>
@@ -387,7 +387,7 @@ input:checked + .slider:before { transform: translateX(20px); }
       </div>
     </section>
 
-    <!-- SUPPLIERS -->
+
     <section id="tab-suppliers" class="tab-content">
       <div class="header-panel">
         <div class="header-title"><h1>Suppliers</h1><p>Manage supplier contacts.</p></div>
@@ -416,7 +416,7 @@ input:checked + .slider:before { transform: translateX(20px); }
       </div>
     </section>
 
-    <!-- CUSTOMERS -->
+   
     <section id="tab-customers" class="tab-content">
       <div class="header-panel">
         <div class="header-title"><h1>Customers</h1><p>Registered customer accounts from the storefront.</p></div>
@@ -433,7 +433,7 @@ input:checked + .slider:before { transform: translateX(20px); }
       </div>
     </section>
 
-    <!-- USERS -->
+   
     <section id="tab-users" class="tab-content">
       <div class="header-panel">
         <div class="header-title"><h1>System Users</h1><p>Admin and staff accounts.</p></div>
@@ -463,7 +463,7 @@ input:checked + .slider:before { transform: translateX(20px); }
       </div>
     </section>
 
-    <!-- SALES HISTORY -->
+   
     <section id="tab-sales" class="tab-content">
       <div class="header-panel">
         <div class="header-title"><h1>Sales History</h1><p>All completed orders and POS invoices.</p></div>
@@ -491,7 +491,7 @@ input:checked + .slider:before { transform: translateX(20px); }
       </div>
     </section>
 
-    <!-- REPORTS -->
+   
     <section id="tab-reports" class="tab-content">
       <div class="header-panel">
         <div class="header-title"><h1>Business Reports</h1><p>Financial analytics and profit breakdown.</p></div>
@@ -520,7 +520,7 @@ input:checked + .slider:before { transform: translateX(20px); }
       </div>
     </section>
 
-    <!-- MESSAGES -->
+   
     <section id="tab-messages" class="tab-content">
       <div class="header-panel">
         <div class="header-title"><h1>Customer Messages</h1><p>Inbound contact form inquiries.</p></div>
@@ -539,7 +539,7 @@ input:checked + .slider:before { transform: translateX(20px); }
 <div class="toast-container" id="toastBox"></div>
 
 <script>
-// ── State ──
+
 let products = [], suppliers = [], customers = [], users = [], sales = [], messages = [];
 let posCart = [];
 let authToken = localStorage.getItem('tm_auth_token') || '';

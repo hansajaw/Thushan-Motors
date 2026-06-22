@@ -198,21 +198,24 @@ async function seedAdminIfMissing() {
   const adminEmail = process.env.ADMIN_EMAIL || 'admin@thushanmotors.lk';
   const adminPassword = process.env.ADMIN_PASSWORD || 'Admin@123';
 
-  const [rows] = await pool.query('SELECT id FROM users WHERE role = "admin" LIMIT 1');
+  const [rows] = await pool.query(
+    'SELECT id FROM users WHERE role = ? LIMIT 1',
+    ['admin']
+  );
 
   if (rows.length) return;
 
   const hash = hashPassword(adminPassword);
 
   await pool.query(
-    `INSERT INTO users (name, email, phone, password_hash, role, email_verified)
+    `INSERT INTO users 
+      (name, email, phone, password_hash, role, email_verified)
      VALUES (?, ?, ?, ?, ?, ?)`,
     ['Admin', adminEmail, '', hash, 'admin', 1]
   );
 
   console.log(`✅ Admin account created: ${adminEmail}`);
 }
-
 async function seedProductsIfEmpty() {
   const [rows] = await pool.query('SELECT COUNT(*) AS cnt FROM products');
 
