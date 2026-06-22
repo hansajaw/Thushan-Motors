@@ -195,6 +195,7 @@ h1, h2, h3, h4, h5, h6 { font-family: 'Montserrat', sans-serif; font-weight: 700
       <li id="li-messages"><a href="#" onclick="switchTab('messages')"><i class="fa-solid fa-envelope-open-text"></i> Client Messages</a></li>
     </ul>
     <div class="sidebar-footer">
+      <a href="/" target="_blank" class="btn-logout" style="display:flex;align-items:center;gap:8px;text-decoration:none;margin-bottom:8px;background:var(--accent2,#1a6b3a);"><i class="fa-solid fa-globe"></i> Visit Live Site</a>
       <button class="btn-logout" onclick="adminLogout()"><i class="fa-solid fa-power-off"></i> Exit System</button>
     </div>
   </aside>
@@ -663,7 +664,13 @@ async function syncAllSystemData() {
 
   const dataSales = await fetchSystemDataApi('/api/admin/sales') || await fetchSystemDataApi('/api/sales');
   if (dataSales && Array.isArray(dataSales)) {
-    globalSalesRecordsList = dataSales;
+    globalSalesRecordsList = dataSales.map(s => ({
+      ...s,
+      customerName: s.customerName || s.customer_name || 'Online Customer',
+      date: s.date || (s.createdAt ? s.createdAt.substring(0,10) : 'N/A'),
+      total: s.total || s.grandTotal || 0,
+      itemsCount: s.itemsCount || (Array.isArray(s.items) ? s.items.length : 1)
+    }));
   } else {
     globalSalesRecordsList = JSON.parse(localStorage.getItem('bkp_sales')) || [];
   }
@@ -684,7 +691,12 @@ async function syncAllSystemData() {
 
   const dataUsers = await fetchSystemDataApi('/api/admin/users') || await fetchSystemDataApi('/api/users');
   if (dataUsers && Array.isArray(dataUsers)) {
-    globalUsersList = dataUsers;
+    globalUsersList = dataUsers.map(u => ({
+      ...u,
+      username: u.username || u.email || '',
+      fullname: u.fullname || u.name || '',
+      status: u.status || (u.emailVerified ? 'Active' : 'Pending')
+    }));
   } else {
     globalUsersList = JSON.parse(localStorage.getItem('bkp_users')) || [];
   }
@@ -1049,6 +1061,7 @@ async function saveSupplierItem(event) {
 }
 async function deleteSupplierNode(id) {
   if(confirm('Delete operational supplier profile connection?')) {
+    await fetchSystemDataApi(`/api/admin/suppliers/${id}`, { method: 'DELETE' });
     globalSuppliersList = globalSuppliersList.filter((s,idx) => (s.id ? String(s.id)!==String(id) : idx!==id));
     localStorage.setItem('bkp_suppliers', JSON.stringify(globalSuppliersList));
     showToast('Supplier records detached.', 'success'); await syncAllSystemData();
@@ -1149,8 +1162,8 @@ function closeUserForm() { document.getElementById('user-form-card').style.displ
 async function saveUserItem(event) {
   event.preventDefault();
   const data = {
-    username: document.getElementById('usr-username').value.trim().toLowerCase(),
-    fullname: document.getElementById('usr-fullname').value.trim(),
+    email: document.getElementById('usr-username').value.trim().toLowerCase(),
+    name: document.getElementById('usr-fullname').value.trim(),
     role: document.getElementById('usr-role').value,
     status: document.getElementById('usr-status').value
   };
