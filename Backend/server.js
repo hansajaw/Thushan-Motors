@@ -8,6 +8,7 @@ const path = require('path');
 const crypto = require('crypto');
 const { initDatabase, getPool } = require('./config/db');
 const { hashPassword, verifyPassword } = require('./utils/password');
+// buy_price is stored in products table; used for net profit calculation in reports
 const nodemailer = require('nodemailer');
 const { OAuth2Client } = require('google-auth-library');
 
@@ -164,6 +165,7 @@ function mapProduct(row) {
     category: row.category,
     price: Number(row.price),
     oldPrice: row.old_price !== null && row.old_price !== undefined ? Number(row.old_price) : null,
+    buyPrice: row.buy_price !== null && row.buy_price !== undefined ? Number(row.buy_price) : null,
     stock: !!row.stock,
     featured: !!row.featured,
     img: row.img,
@@ -1101,20 +1103,44 @@ app.get('/api/admin/messages', requireAdmin, asyncHandler(async (req, res) => {
   res.json(rows.map(mapMessage));
 }));
 
+app.delete('/api/admin/messages/:id', requireAdmin, asyncHandler(async (req, res) => {
+  const [result] = await getPool().query('DELETE FROM messages WHERE id = ?', [Number(req.params.id)]);
+  if (!result.affectedRows) return res.status(404).json({ message: 'Message not found.' });
+  res.json({ message: 'Message deleted.' });
+}));
+
+// ─── ADMIN: CUSTOMERS list (with order stats) ─────────────────────────────────
+app.get('/api/admin/customers', requireAdmin, asyncHandler(async (req, res) => {
+  const [rows] = await getPool().query(
+    `SELECT u.id, u.name, u.email, u.phone, u.email_verified, u.created_at,
+            COUNT(o.id) AS order_count, COALESCE(SUM(o.total),0) AS total_spent
+     FROM users u
+     LEFT JOIN orders o ON o.user_id = u.id
+     WHERE u.role = 'customer'
+     GROUP BY u.id ORDER BY u.id DESC`
+  );
+  res.json(rows.map(r => ({
+    id: r.id, name: r.name, email: r.email, phone: r.phone || '',
+    emailVerified: !!r.email_verified, createdAt: r.created_at,
+    orderCount: Number(r.order_count), totalSpent: Number(r.total_spent)
+  })));
+}));
+
 app.post('/api/admin/products', requireAdmin, asyncHandler(async (req, res) => {
-  const { name, brand = null, category, price, oldPrice = null, stock = true, featured = false, img = '', freeDelivery = false } = req.body;
+  const { name, brand = null, category, price, oldPrice = null, buyPrice = null, stock = true, featured = false, img = '', freeDelivery = false } = req.body;
   if (!name || !category || price === undefined) return res.status(400).json({ message: 'Name, category, and price are required.' });
 
   const pool = getPool();
   const [result] = await pool.query(
-    `INSERT INTO products (name, brand, category, price, old_price, stock, featured, img, free_delivery)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO products (name, brand, category, price, old_price, buy_price, stock, featured, img, free_delivery)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       String(name).trim(),
       brand || null,
       category,
       Number(price),
       oldPrice === '' || oldPrice === null ? null : Number(oldPrice),
+      buyPrice === '' || buyPrice === null ? null : Number(buyPrice),
       stock ? 1 : 0,
       featured ? 1 : 0,
       img,
@@ -1139,6 +1165,7 @@ app.patch('/api/admin/products/:id', requireAdmin, asyncHandler(async (req, res)
     category: 'category',
     price: 'price',
     oldPrice: 'old_price',
+    buyPrice: 'buy_price',
     stock: 'stock',
     featured: 'featured',
     img: 'img',
@@ -1153,6 +1180,7 @@ app.patch('/api/admin/products/:id', requireAdmin, asyncHandler(async (req, res)
       let value = req.body[bodyKey];
       if (bodyKey === 'price') value = Number(value);
       if (bodyKey === 'oldPrice') value = value === '' || value === null ? null : Number(value);
+      if (bodyKey === 'buyPrice') value = value === '' || value === null ? null : Number(value);
       if (bodyKey === 'stock' || bodyKey === 'featured' || bodyKey === 'freeDelivery') value = value ? 1 : 0;
       setClauses.push(`${column} = ?`);
       params.push(value);
@@ -1194,23 +1222,99 @@ app.get('/api/admin/sales', requireAdmin, asyncHandler(async (req, res) => {
     itemsByOrder[item.order_id].push(item);
   }
 
-  res.json(orders.map(o => ({
-    id: o.id,
-    orderNumber: `TM-${String(o.id).padStart(5, '0')}`,
-    customerName: o.customer_name,
-    customerEmail: o.customer_email,
-    customerPhone: o.customer_phone || '',
-    status: o.status,
-    total: Number(o.total),
-    paymentMethod: o.payment_method,
-    createdAt: o.created_at,
-    items: (itemsByOrder[o.id] || []).map(i => ({
+  res.json(orders.map(o => {
+    const orderItems = (itemsByOrder[o.id] || []).map(i => ({
       productId: i.product_id,
       name: i.name,
       price: Number(i.price),
-      qty: i.qty
+      quantity: Number(i.quantity || i.qty || 1),
+      subtotal: Number(i.subtotal || 0)
+    }));
+    const totalQty = orderItems.reduce((s, i) => s + i.quantity, 0);
+    return {
+      id: o.id,
+      orderNumber: `TM-${String(o.id).padStart(5, '0')}`,
+      customerName: o.customer_name,
+      customerEmail: o.customer_email,
+      customerPhone: o.customer_phone || '',
+      status: o.status,
+      subtotal: Number(o.subtotal || o.total),
+      discount: Number(o.discount || 0),
+      total: Number(o.total),
+      paymentMethod: o.payment_method,
+      paymentStatus: o.payment_status,
+      createdAt: o.created_at,
+      itemsCount: totalQty,
+      items: orderItems
+    };
+  }));
+}));
+
+// ─── ADMIN: REPORTS (net profit, revenue breakdown) ──────────────────────────
+app.get('/api/admin/reports', requireAdmin, asyncHandler(async (req, res) => {
+  const pool = getPool();
+
+  // Revenue from orders
+  const [revenueRows] = await pool.query(
+    `SELECT COALESCE(SUM(o.total),0) AS gross_revenue,
+            COALESCE(SUM(o.discount),0) AS total_discounts,
+            COUNT(o.id) AS order_count
+     FROM orders o WHERE o.status != 'cancelled'`
+  );
+
+  // Cost (buy_price * quantity) for all sold items
+  const [costRows] = await pool.query(
+    `SELECT COALESCE(SUM(oi.quantity * COALESCE(p.buy_price, 0)), 0) AS total_cost
+     FROM order_items oi
+     JOIN orders o ON o.id = oi.order_id
+     JOIN products p ON p.id = oi.product_id
+     WHERE o.status != 'cancelled'`
+  );
+
+  // Monthly revenue (last 6 months)
+  const [monthlyRows] = await pool.query(
+    `SELECT DATE_FORMAT(created_at, '%Y-%m') AS month,
+            COALESCE(SUM(total),0) AS revenue,
+            COUNT(*) AS orders
+     FROM orders
+     WHERE status != 'cancelled' AND created_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+     GROUP BY month ORDER BY month ASC`
+  );
+
+  // Top products by revenue
+  const [topProducts] = await pool.query(
+    `SELECT p.name, p.brand, SUM(oi.quantity) AS units_sold,
+            SUM(oi.subtotal) AS revenue,
+            SUM(oi.quantity * COALESCE(p.buy_price,0)) AS cost
+     FROM order_items oi
+     JOIN orders o ON o.id = oi.order_id
+     JOIN products p ON p.id = oi.product_id
+     WHERE o.status != 'cancelled'
+     GROUP BY oi.product_id, p.name, p.brand
+     ORDER BY revenue DESC LIMIT 5`
+  );
+
+  const gross = Number(revenueRows[0].gross_revenue);
+  const cost = Number(costRows[0].total_cost);
+  const discounts = Number(revenueRows[0].total_discounts);
+  const netProfit = gross - cost;
+
+  res.json({
+    grossRevenue: gross,
+    totalCost: cost,
+    totalDiscounts: discounts,
+    netProfit,
+    orderCount: Number(revenueRows[0].order_count),
+    monthly: monthlyRows,
+    topProducts: topProducts.map(p => ({
+      name: p.name,
+      brand: p.brand || 'Generic',
+      unitsSold: Number(p.units_sold),
+      revenue: Number(p.revenue),
+      cost: Number(p.cost),
+      profit: Number(p.revenue) - Number(p.cost)
     }))
-  })));
+  });
 }));
 
 // ─── ADMIN: USERS ─────────────────────────────────────────────────────────────

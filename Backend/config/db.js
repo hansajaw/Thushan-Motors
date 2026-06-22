@@ -148,28 +148,86 @@ async function createTables() {
       email VARCHAR(190) DEFAULT '',
       address VARCHAR(500)  DEFAULT '' '',
       notes TEXT DEFAULT '',
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
-
-  console.log('✅ All tables verified / created.');
 }
 
+<<<<<<< HEAD
+// Step 2.5: MIGRATION — upgrades tables that were already created by an
+// older version of this file (e.g. on Aiven, before img was LONGTEXT).
+// ALTER TABLE is safe to run every server start. We check
+// INFORMATION_SCHEMA first so it works on all MySQL versions (5.x/8.x).
+async function runMigrations() {
+  // Helper: check if a column exists in a table
+  async function columnExists(table, column) {
+    const [rows] = await pool.query(
+      `SELECT COUNT(*) AS cnt FROM INFORMATION_SCHEMA.COLUMNS
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?`,
+      [table, column]
+    );
+    return rows[0].cnt > 0;
+  }
+=======
 async function seedAdminIfMissing() {
   const adminEmail = process.env.ADMIN_EMAIL || 'admin@thushanmotors.com';
   const adminPassword = process.env.ADMIN_PASSWORD || 'Admin@123';
+>>>>>>> 6ed2bf7 (all)
 
-  const [rows] = await pool.query('SELECT id FROM users WHERE role = "admin" LIMIT 1');
-  if (rows.length) return;
+  const tasks = [
+    // Always-safe type change
+    async () => pool.query(`ALTER TABLE products MODIFY COLUMN img LONGTEXT`),
 
-  const hash = hashPassword(adminPassword);
-  await pool.query(
-    `INSERT INTO users (name, email, phone, password_hash, role, email_verified) VALUES (?, ?, ?, ?, ?, ?)`,
-    ['Admin', adminEmail, '', hash, 'admin', 1]
-  );
-  console.log(`✅ Admin account created: ${adminEmail}`);
+    // Add subtotal column if missing
+    async () => {
+      if (!(await columnExists('orders', 'subtotal'))) {
+        await pool.query(`ALTER TABLE orders ADD COLUMN subtotal DECIMAL(10,2) NOT NULL DEFAULT 0`);
+        console.log('Migration: added orders.subtotal');
+      }
+    },
+
+    // Add discount column if missing
+    async () => {
+      if (!(await columnExists('orders', 'discount'))) {
+        await pool.query(`ALTER TABLE orders ADD COLUMN discount DECIMAL(10,2) NOT NULL DEFAULT 0`);
+        console.log('Migration: added orders.discount');
+      }
+    },
+
+    // Back-fill old rows: subtotal = total where subtotal is still 0
+    async () => {
+      if (await columnExists('orders', 'subtotal')) {
+        await pool.query(`UPDATE orders SET subtotal = total WHERE subtotal = 0 AND total > 0`);
+      }
+    },
+
+    // Add Google Auth and email verification columns to users if missing
+    async () => {
+      if (!(await columnExists('users', 'google_id'))) {
+        await pool.query(`
+          ALTER TABLE users
+          ADD COLUMN google_id VARCHAR(255) NULL UNIQUE,
+          ADD COLUMN email_verified TINYINT(1) NOT NULL DEFAULT 0,
+          ADD COLUMN email_otp_hash VARCHAR(255) NULL,
+          ADD COLUMN email_otp_expires_at DATETIME NULL,
+          ADD COLUMN email_otp_attempts INT NOT NULL DEFAULT 0;
+        `);
+        
+        await pool.query(`UPDATE users SET email_verified = 1 WHERE email_verified = 0;`);
+        console.log('Migration: added Google auth and email verification columns to users');
+      }
+    },
+  ];
+
+  for (const task of tasks) {
+    try { await task(); } catch (err) {
+      console.warn('Migration skipped (safe to ignore):', err.message);
+    }
+  }
 }
 
+// Step 3: if the products table is empty, fill it with your starter catalog.
 async function seedProductsIfEmpty() {
   const [rows] = await pool.query('SELECT COUNT(*) AS cnt FROM products');
   if (rows[0].cnt > 0) return;

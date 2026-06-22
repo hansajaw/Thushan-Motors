@@ -1,7 +1,7 @@
 {
   "name": "thushan-motors-backend",
-  "version": "1.0.0",
-  "description": "Backend API for Thushan Motors online shop",
+  "version": "2.0.0",
+  "description": "Backend API for Thushan Motors — Aiven MySQL",
   "main": "server.js",
   "type": "commonjs",
   "scripts": {

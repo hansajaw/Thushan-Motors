@@ -1,22 +1,22 @@
-// utils/password.js
-// Small helper module for hashing/checking passwords with PBKDF2.
-// Pulled out of server.js so config/db.js can use the exact same hashing
-// when it seeds the first admin account — keeping one password format
-// everywhere instead of two copies of this logic drifting apart.
+'use strict';
 
 const crypto = require('crypto');
 
 function hashPassword(password) {
   const salt = crypto.randomBytes(16).toString('hex');
-  const hash = crypto.pbkdf2Sync(password, salt, 120000, 64, 'sha512').toString('hex');
+  const hash = crypto.createHmac('sha256', salt).update(String(password)).digest('hex');
   return `${salt}:${hash}`;
 }
 
-function verifyPassword(password, saved) {
-  const [salt, originalHash] = String(saved || '').split(':');
-  if (!salt || !originalHash) return false;
-  const hash = crypto.pbkdf2Sync(password, salt, 120000, 64, 'sha512').toString('hex');
-  return crypto.timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(originalHash, 'hex'));
+function verifyPassword(password, stored) {
+  if (!stored || !stored.includes(':')) return false;
+  const [salt, expected] = stored.split(':');
+  const actual = crypto.createHmac('sha256', salt).update(String(password)).digest('hex');
+  try {
+    return crypto.timingSafeEqual(Buffer.from(actual, 'hex'), Buffer.from(expected, 'hex'));
+  } catch {
+    return false;
+  }
 }
 
 module.exports = { hashPassword, verifyPassword };
