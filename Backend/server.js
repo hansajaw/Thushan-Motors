@@ -10,6 +10,9 @@ const { initDatabase, getPool } = require('./config/db');
 const { hashPassword, verifyPassword } = require('./utils/password');
 
 const app = express();
+
+app.set('trust proxy', 1);
+
 const PORT = Number(process.env.PORT || 3000);
 const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_change_me';
 const ADMIN_KEY = process.env.ADMIN_KEY || 'dev_admin_key_change_me';
@@ -790,14 +793,36 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: 'Something went wrong on the server.' });
 });
 
-async function start() {
-  await initDatabase();
-  app.listen(PORT, () => {
-    console.log(`Thushan Motors API running on http://localhost:${PORT}`);
-  });
+let dbReady = false;
+
+async function prepareDatabase(){
+  if(!dbReady){
+    await initDatabase();
+    dbReady = true;
+  }
 }
 
-start().catch(err => {
-  console.error('Failed to start server:', err);
-  process.exit(1);
-});
+/* Vercel needs an exported function */
+module.exports = async function handler(req, res){
+  try{
+    await prepareDatabase();
+    return app(req, res);
+  }catch(err){
+    console.error('Failed to handle request:', err);
+    res.status(500).json({ message: 'Server failed to start.' });
+  }
+};
+
+/* Local development */
+if(require.main === module){
+  prepareDatabase()
+    .then(() => {
+      app.listen(PORT, () => {
+        console.log(`Thushan Motors API running on http://localhost:${PORT}`);
+      });
+    })
+    .catch(err => {
+      console.error('Failed to start server:', err);
+      process.exit(1);
+    });
+}
