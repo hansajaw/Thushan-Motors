@@ -1075,6 +1075,126 @@ app.delete('/api/admin/products/:id', requireAdmin, asyncHandler(async (req, res
   res.json({ message: 'Product deleted.' });
 }));
 
+// ─── ADMIN: SALES (orders alias — admin panel calls /api/admin/sales) ─────────
+app.get('/api/admin/sales', requireAdmin, asyncHandler(async (req, res) => {
+  const pool = getPool();
+  const [orders] = await pool.query(
+    `SELECT o.*, u.name AS customer_name, u.email AS customer_email, u.phone AS customer_phone
+     FROM orders o JOIN users u ON u.id = o.user_id
+     ORDER BY o.id DESC`
+  );
+  if (!orders.length) return res.json([]);
+
+  const orderIds = orders.map(o => o.id);
+  const placeholders = orderIds.map(() => '?').join(',');
+  const [items] = await pool.query(`SELECT * FROM order_items WHERE order_id IN (${placeholders})`, orderIds);
+
+  const itemsByOrder = {};
+  for (const item of items) {
+    if (!itemsByOrder[item.order_id]) itemsByOrder[item.order_id] = [];
+    itemsByOrder[item.order_id].push(item);
+  }
+
+  res.json(orders.map(o => ({
+    id: o.id,
+    orderNumber: `TM-${String(o.id).padStart(5, '0')}`,
+    customerName: o.customer_name,
+    customerEmail: o.customer_email,
+    customerPhone: o.customer_phone || '',
+    status: o.status,
+    total: Number(o.total),
+    paymentMethod: o.payment_method,
+    createdAt: o.created_at,
+    items: (itemsByOrder[o.id] || []).map(i => ({
+      productId: i.product_id,
+      name: i.name,
+      price: Number(i.price),
+      qty: i.qty
+    }))
+  })));
+}));
+
+// ─── ADMIN: USERS ─────────────────────────────────────────────────────────────
+app.get('/api/admin/users', requireAdmin, asyncHandler(async (req, res) => {
+  const [rows] = await getPool().query(
+    `SELECT id, name, email, phone, role, email_verified, created_at FROM users ORDER BY id DESC`
+  );
+  res.json(rows.map(r => ({
+    id: r.id,
+    name: r.name,
+    email: r.email,
+    phone: r.phone || '',
+    role: r.role,
+    emailVerified: !!r.email_verified,
+    createdAt: r.created_at
+  })));
+}));
+
+app.post('/api/admin/users', requireAdmin, asyncHandler(async (req, res) => {
+  const { name, email, phone = '', role = 'customer', password } = req.body;
+  if (!name || !email) return res.status(400).json({ message: 'Name and email are required.' });
+  if (!validateEmail(email)) return res.status(400).json({ message: 'Invalid email address.' });
+  const { hashPassword: hp } = require('./utils/password');
+  const passwordHash = hp(password || crypto.randomBytes(12).toString('hex'));
+  try {
+    const [result] = await getPool().query(
+      `INSERT INTO users (name, email, phone, password_hash, role, email_verified) VALUES (?, ?, ?, ?, ?, 1)`,
+      [name.trim(), email.trim().toLowerCase(), phone.trim(), passwordHash, role]
+    );
+    res.status(201).json({ id: result.insertId, name: name.trim(), email, phone, role });
+  } catch (err) {
+    if (err.code === 'ER_DUP_ENTRY') return res.status(409).json({ message: 'A user with this email already exists.' });
+    throw err;
+  }
+}));
+
+app.delete('/api/admin/users/:id', requireAdmin, asyncHandler(async (req, res) => {
+  const [result] = await getPool().query('DELETE FROM users WHERE id = ? AND role != "admin"', [Number(req.params.id)]);
+  if (!result.affectedRows) return res.status(404).json({ message: 'User not found or cannot delete admin.' });
+  res.json({ message: 'User deleted.' });
+}));
+
+// ─── ADMIN: SUPPLIERS ─────────────────────────────────────────────────────────
+app.get('/api/admin/suppliers', requireAdmin, asyncHandler(async (req, res) => {
+  const [rows] = await getPool().query('SELECT * FROM suppliers ORDER BY id DESC');
+  res.json(rows.map(r => ({
+    id: r.id,
+    name: r.name,
+    contact: r.contact || '',
+    phone: r.phone || '',
+    email: r.email || '',
+    address: r.address || '',
+    notes: r.notes || '',
+    createdAt: r.created_at
+  })));
+}));
+
+app.post('/api/admin/suppliers', requireAdmin, asyncHandler(async (req, res) => {
+  const { name, contact = '', phone = '', email = '', address = '', notes = '' } = req.body;
+  if (!name || !name.trim()) return res.status(400).json({ message: 'Supplier name is required.' });
+  const [result] = await getPool().query(
+    `INSERT INTO suppliers (name, contact, phone, email, address, notes) VALUES (?, ?, ?, ?, ?, ?)`,
+    [name.trim(), contact.trim(), phone.trim(), email.trim(), address.trim(), notes.trim()]
+  );
+  res.status(201).json({ id: result.insertId, name: name.trim(), contact, phone, email, address, notes });
+}));
+
+app.patch('/api/admin/suppliers/:id', requireAdmin, asyncHandler(async (req, res) => {
+  const { name, contact = '', phone = '', email = '', address = '', notes = '' } = req.body;
+  const [result] = await getPool().query(
+    `UPDATE suppliers SET name=?, contact=?, phone=?, email=?, address=?, notes=? WHERE id=?`,
+    [name, contact, phone, email, address, notes, Number(req.params.id)]
+  );
+  if (!result.affectedRows) return res.status(404).json({ message: 'Supplier not found.' });
+  res.json({ message: 'Supplier updated.' });
+}));
+
+app.delete('/api/admin/suppliers/:id', requireAdmin, asyncHandler(async (req, res) => {
+  const [result] = await getPool().query('DELETE FROM suppliers WHERE id = ?', [Number(req.params.id)]);
+  if (!result.affectedRows) return res.status(404).json({ message: 'Supplier not found.' });
+  res.json({ message: 'Supplier deleted.' });
+}));
+
 app.get('*', (req, res) => {
   res.sendFile(path.join(FRONTEND_DIR, 'index.html'));
 });
