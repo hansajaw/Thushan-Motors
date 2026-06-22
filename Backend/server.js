@@ -8,6 +8,8 @@ const path = require('path');
 const crypto = require('crypto');
 const { initDatabase, getPool } = require('./config/db');
 const { hashPassword, verifyPassword } = require('./utils/password');
+const nodemailer = require('nodemailer');
+const { OAuth2Client } = require('google-auth-library');
 
 const app = express();
 
@@ -16,6 +18,9 @@ app.set('trust proxy', 1);
 const PORT = Number(process.env.PORT || 3000);
 const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_change_me';
 const ADMIN_KEY = process.env.ADMIN_KEY || 'dev_admin_key_change_me';
+
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
+const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 // FIX: the HTML/CSS/JS files (index.html, admin.html, shop.html, etc.)
 // live directly in the project's root folder (one level above Backend),
 // NOT inside a separate "frontend" subfolder. The old path was pointing
@@ -95,6 +100,46 @@ function validateEmail(email) {
 
 function orderNumber(id) {
   return `TM-${String(id).padStart(5, '0')}`;
+}
+
+function hashOtp(otp) {
+  return crypto.createHash('sha256').update(String(otp)).digest('hex');
+}
+
+function generateOtp() {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+async function sendOtpEmail(email, otp) {
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    console.log(`OTP for ${email}: ${otp}`);
+    return;
+  }
+
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: Number(process.env.SMTP_PORT || 587),
+    secure: Number(process.env.SMTP_PORT || 587) === 465,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS
+    }
+  });
+
+  await transporter.sendMail({
+    from: process.env.EMAIL_FROM || process.env.SMTP_USER,
+    to: email,
+    subject: 'Verify your Thushan Motors account',
+    html: `
+      <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111">
+        <h2>Thushan Motors Email Verification</h2>
+        <p>Your OTP verification code is:</p>
+        <h1 style="letter-spacing:6px;color:#CC1111">${otp}</h1>
+        <p>This code will expire in 10 minutes.</p>
+        <p>If you did not create this account, please ignore this email.</p>
+      </div>
+    `
+  });
 }
 
 // ---------- Row -> JSON mappers (DB uses snake_case, API stays camelCase) ----------
@@ -273,40 +318,282 @@ app.get('/api/products/:id', asyncHandler(async (req, res) => {
 
 app.post('/api/auth/register', asyncHandler(async (req, res) => {
   const { name, email, phone = '', password } = req.body;
-  if (!name || !email || !password) return res.status(400).json({ message: 'Name, email, and password are required.' });
-  if (!validateEmail(email)) return res.status(400).json({ message: 'Please enter a valid email address.' });
-  if (String(password).length < 8) return res.status(400).json({ message: 'Password must be at least 8 characters.' });
+
+  if (!name || !email || !password) {
+    return res.status(400).json({ message: 'Name, email, and password are required.' });
+  }
+
+  if (!validateEmail(email)) {
+    return res.status(400).json({ message: 'Please enter a valid email address.' });
+  }
+
+  if (String(password).length < 8) {
+    return res.status(400).json({ message: 'Password must be at least 8 characters.' });
+  }
 
   const pool = getPool();
   const cleanEmail = String(email).trim().toLowerCase();
 
   const [existing] = await pool.query('SELECT id FROM users WHERE email = ?', [cleanEmail]);
-  if (existing.length) return res.status(409).json({ message: 'An account with this email already exists.' });
 
+  if (existing.length) {
+    return res.status(409).json({ message: 'An account with this email already exists.' });
+  }
+
+  const otp = generateOtp();
+  const otpHash = hashOtp(otp);
+  const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
   const passwordHash = hashPassword(password);
-  const [result] = await pool.query(
-    'INSERT INTO users (name, email, phone, password_hash, role) VALUES (?, ?, ?, ?, ?)',
-    [String(name).trim(), cleanEmail, String(phone).trim(), passwordHash, 'customer']
+
+  await pool.query(
+    `INSERT INTO users
+      (name, email, phone, password_hash, role, email_verified, email_otp_hash, email_otp_expires_at, email_otp_attempts)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      String(name).trim(),
+      cleanEmail,
+      String(phone).trim(),
+      passwordHash,
+      'customer',
+      0,
+      otpHash,
+      otpExpiresAt,
+      0
+    ]
   );
 
-  const [rows] = await pool.query('SELECT * FROM users WHERE id = ?', [result.insertId]);
-  const user = rows[0];
-  const token = signToken({ userId: user.id, role: user.role });
-  res.status(201).json({ token, user: cleanUser(user) });
+  await sendOtpEmail(cleanEmail, otp);
+
+  res.status(201).json({
+    message: 'Account created. Please verify your email using the OTP we sent.',
+    needsVerification: true,
+    email: cleanEmail
+  });
 }));
 
 app.post('/api/auth/login', asyncHandler(async (req, res) => {
   const { email, password } = req.body;
-  if (!email || !password) return res.status(400).json({ message: 'Email and password are required.' });
 
-  const [rows] = await getPool().query('SELECT * FROM users WHERE email = ?', [String(email).trim().toLowerCase()]);
+  if (!email || !password) {
+    return res.status(400).json({ message: 'Email and password are required.' });
+  }
+
+  const cleanEmail = String(email).trim().toLowerCase();
+
+  const [rows] = await getPool().query(
+    'SELECT * FROM users WHERE email = ?',
+    [cleanEmail]
+  );
+
   const user = rows[0];
+
   if (!user || !verifyPassword(password, user.password_hash)) {
     return res.status(401).json({ message: 'Invalid email or password.' });
   }
 
+  if (user.role !== 'admin' && !user.email_verified) {
+    return res.status(403).json({
+      message: 'Please verify your email before logging in.',
+      needsVerification: true,
+      email: user.email
+    });
+  }
+
   const token = signToken({ userId: user.id, role: user.role });
+
   res.json({ token, user: cleanUser(user) });
+}));
+
+app.post('/api/auth/verify-email', asyncHandler(async (req, res) => {
+  const { email, otp } = req.body;
+
+  if (!email || !otp) {
+    return res.status(400).json({ message: 'Email and OTP are required.' });
+  }
+
+  const cleanEmail = String(email).trim().toLowerCase();
+  const cleanOtp = String(otp).trim();
+  const pool = getPool();
+
+  const [rows] = await pool.query('SELECT * FROM users WHERE email = ?', [cleanEmail]);
+  const user = rows[0];
+
+  if (!user) {
+    return res.status(404).json({ message: 'Account not found.' });
+  }
+
+  if (user.email_verified) {
+    const token = signToken({ userId: user.id, role: user.role });
+    return res.json({
+      token,
+      user: cleanUser(user),
+      message: 'Email already verified.'
+    });
+  }
+
+  if (!user.email_otp_hash || !user.email_otp_expires_at) {
+    return res.status(400).json({ message: 'No OTP found. Please request a new code.' });
+  }
+
+  if (new Date(user.email_otp_expires_at).getTime() < Date.now()) {
+    return res.status(400).json({ message: 'OTP expired. Please request a new code.' });
+  }
+
+  if (Number(user.email_otp_attempts || 0) >= 5) {
+    return res.status(429).json({ message: 'Too many wrong attempts. Please request a new OTP.' });
+  }
+
+  const otpHash = hashOtp(cleanOtp);
+
+  if (otpHash !== user.email_otp_hash) {
+    await pool.query(
+      'UPDATE users SET email_otp_attempts = email_otp_attempts + 1 WHERE id = ?',
+      [user.id]
+    );
+
+    return res.status(400).json({ message: 'Invalid OTP.' });
+  }
+
+  await pool.query(
+    `UPDATE users
+     SET email_verified = 1,
+         email_otp_hash = NULL,
+         email_otp_expires_at = NULL,
+         email_otp_attempts = 0
+     WHERE id = ?`,
+    [user.id]
+  );
+
+  const [updatedRows] = await pool.query('SELECT * FROM users WHERE id = ?', [user.id]);
+  const updatedUser = updatedRows[0];
+
+  const token = signToken({ userId: updatedUser.id, role: updatedUser.role });
+
+  res.json({
+    token,
+    user: cleanUser(updatedUser),
+    message: 'Email verified successfully.'
+  });
+}));
+
+app.post('/api/auth/resend-otp', asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ message: 'Email is required.' });
+  }
+
+  const cleanEmail = String(email).trim().toLowerCase();
+  const pool = getPool();
+
+  const [rows] = await pool.query('SELECT * FROM users WHERE email = ?', [cleanEmail]);
+  const user = rows[0];
+
+  if (!user) {
+    return res.status(404).json({ message: 'Account not found.' });
+  }
+
+  if (user.email_verified) {
+    return res.json({ message: 'Email is already verified.' });
+  }
+
+  const otp = generateOtp();
+  const otpHash = hashOtp(otp);
+  const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+  await pool.query(
+    `UPDATE users
+     SET email_otp_hash = ?,
+         email_otp_expires_at = ?,
+         email_otp_attempts = 0
+     WHERE id = ?`,
+    [otpHash, otpExpiresAt, user.id]
+  );
+
+  await sendOtpEmail(cleanEmail, otp);
+
+  res.json({ message: 'New OTP sent to your email.' });
+}));
+
+app.post('/api/auth/google', asyncHandler(async (req, res) => {
+  const { credential } = req.body;
+
+  if (!credential) {
+    return res.status(400).json({ message: 'Google credential is required.' });
+  }
+
+  if (!GOOGLE_CLIENT_ID) {
+    return res.status(500).json({ message: 'Google login is not configured.' });
+  }
+
+  const ticket = await googleClient.verifyIdToken({
+    idToken: credential,
+    audience: GOOGLE_CLIENT_ID
+  });
+
+  const payload = ticket.getPayload();
+
+  if (!payload || !payload.sub || !payload.email) {
+    return res.status(401).json({ message: 'Invalid Google account.' });
+  }
+
+  if (payload.email_verified === false) {
+    return res.status(401).json({ message: 'Google email is not verified.' });
+  }
+
+  const googleId = payload.sub;
+  const email = String(payload.email).trim().toLowerCase();
+  const name = payload.name || email.split('@')[0];
+
+  const pool = getPool();
+
+  let [rows] = await pool.query(
+    'SELECT * FROM users WHERE google_id = ? OR email = ? LIMIT 1',
+    [googleId, email]
+  );
+
+  let user = rows[0];
+
+  if (!user) {
+    const randomPassword = crypto.randomBytes(20).toString('hex');
+    const passwordHash = hashPassword(randomPassword);
+
+    const [result] = await pool.query(
+      `INSERT INTO users
+        (name, email, phone, password_hash, role, google_id, email_verified)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [
+        name,
+        email,
+        '',
+        passwordHash,
+        'customer',
+        googleId,
+        1
+      ]
+    );
+
+    const [newRows] = await pool.query('SELECT * FROM users WHERE id = ?', [result.insertId]);
+    user = newRows[0];
+  } else {
+    if (!user.google_id || !user.email_verified) {
+      await pool.query(
+        'UPDATE users SET google_id = ?, email_verified = 1 WHERE id = ?',
+        [googleId, user.id]
+      );
+
+      const [updatedRows] = await pool.query('SELECT * FROM users WHERE id = ?', [user.id]);
+      user = updatedRows[0];
+    }
+  }
+
+  const token = signToken({ userId: user.id, role: user.role });
+
+  res.json({
+    token,
+    user: cleanUser(user),
+    message: 'Google login successful.'
+  });
 }));
 
 app.get('/api/auth/me', requireAuth, (req, res) => {

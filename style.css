@@ -2981,3 +2981,23 @@ footer{
     padding:0!important;
   }
 }
+
+.google-btn-box{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  min-height:42px;
+  margin:6px 0 14px;
+}
+
+#otpForm .auth-submit-btn{
+  margin-top:6px;
+}
+
+#otpCode{
+  text-align:center;
+  font-size:20px;
+  font-weight:800;
+  letter-spacing:6px;
+  font-family:'Montserrat',sans-serif;
+}
