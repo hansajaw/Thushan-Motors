@@ -52,6 +52,11 @@ async function createTables() {
       phone VARCHAR(30) DEFAULT '',
       password_hash VARCHAR(255) NOT NULL,
       role ENUM('customer','admin') NOT NULL DEFAULT 'customer',
+      google_id VARCHAR(255) NULL UNIQUE,
+      email_verified TINYINT(1) NOT NULL DEFAULT 0,
+      email_otp_hash VARCHAR(255) NULL,
+      email_otp_expires_at DATETIME NULL,
+      email_otp_attempts INT NOT NULL DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
@@ -161,6 +166,23 @@ async function runMigrations() {
     async () => {
       if (await columnExists('orders', 'subtotal')) {
         await pool.query(`UPDATE orders SET subtotal = total WHERE subtotal = 0 AND total > 0`);
+      }
+    },
+
+    // Add Google Auth and email verification columns to users if missing
+    async () => {
+      if (!(await columnExists('users', 'google_id'))) {
+        await pool.query(`
+          ALTER TABLE users
+          ADD COLUMN google_id VARCHAR(255) NULL UNIQUE,
+          ADD COLUMN email_verified TINYINT(1) NOT NULL DEFAULT 0,
+          ADD COLUMN email_otp_hash VARCHAR(255) NULL,
+          ADD COLUMN email_otp_expires_at DATETIME NULL,
+          ADD COLUMN email_otp_attempts INT NOT NULL DEFAULT 0;
+        `);
+        
+        await pool.query(`UPDATE users SET email_verified = 1 WHERE email_verified = 0;`);
+        console.log('Migration: added Google auth and email verification columns to users');
       }
     },
   ];
