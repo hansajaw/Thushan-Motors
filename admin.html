@@ -542,66 +542,135 @@ input:checked + .slider:before { transform: translateX(20px); }
 
 let products = [], suppliers = [], customers = [], users = [], sales = [], messages = [];
 let posCart = [];
-let authToken = localStorage.getItem('tm_auth_token') || '';
-const BASE = window.location.origin;
+
+/* Admin token */
+let authToken =
+  localStorage.getItem('tm_auth_token') ||
+  localStorage.getItem('thushanAdminToken') ||
+  localStorage.getItem('thushanUserToken') ||
+  '';
+
+/* Backend API URL */
+const ADMIN_API_BASE =
+  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:3000'
+    : 'https://thushan-motors.vercel.app';
 
 // ── Toast ──
 function toast(msg, type = 'success') {
   const box = document.getElementById('toastBox');
   const el = document.createElement('div');
+
   el.className = `toast ${type}`;
-  const icon = type === 'success' ? 'fa-circle-check' : type === 'info' ? 'fa-circle-info' : 'fa-circle-exclamation';
+
+  const icon = type === 'success'
+    ? 'fa-circle-check'
+    : type === 'info'
+      ? 'fa-circle-info'
+      : 'fa-circle-exclamation';
+
   el.innerHTML = `<i class="fa-solid ${icon}"></i><span>${msg}</span>`;
   box.appendChild(el);
+
   setTimeout(() => el.classList.add('show'), 50);
-  setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 400); }, 4000);
+
+  setTimeout(() => {
+    el.classList.remove('show');
+    setTimeout(() => el.remove(), 400);
+  }, 4000);
 }
 
 // ── API helper ──
 async function api(path, opts = {}) {
-  opts.headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
-  if (authToken) opts.headers['Authorization'] = `Bearer ${authToken}`;
+  opts.headers = {
+    'Content-Type': 'application/json',
+    ...(opts.headers || {})
+  };
+
+  if (authToken) {
+    opts.headers['Authorization'] = `Bearer ${authToken}`;
+  }
+
   try {
-    const r = await fetch(BASE + path, opts);
-    if (r.status === 401 || r.status === 403) {
+    const response = await fetch(ADMIN_API_BASE + path, opts);
+
+    if (response.status === 401 || response.status === 403) {
       authToken = '';
+
       localStorage.removeItem('tm_auth_token');
+      localStorage.removeItem('thushanAdminToken');
+      localStorage.removeItem('thushanUserToken');
+      localStorage.removeItem('tm_current_user');
+
       showLogin();
-      throw new Error('Unauthorized');
+
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || 'Unauthorized');
     }
-    if (!r.ok) {
-      const err = await r.json().catch(() => ({}));
-      throw new Error(err.message || `HTTP ${r.status}`);
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || `HTTP ${response.status}`);
     }
-    return r.status === 204 ? null : await r.json();
-  } catch(e) {
-    if (e.message !== 'Unauthorized') console.error('API error', path, e.message);
+
+    return response.status === 204 ? null : await response.json();
+  } catch (e) {
+    console.error('API error:', ADMIN_API_BASE + path, e.message);
     throw e;
   }
 }
 
 // ── Auth ──
-function showLogin() { document.getElementById('loginOverlay').style.display = 'flex'; }
-function hideLogin() { document.getElementById('loginOverlay').style.display = 'none'; }
+function showLogin() {
+  document.getElementById('loginOverlay').style.display = 'flex';
+}
+
+function hideLogin() {
+  document.getElementById('loginOverlay').style.display = 'none';
+}
 
 async function doLogin() {
   const email = document.getElementById('loginEmail').value.trim();
   const pass = document.getElementById('loginPassword').value;
   const errEl = document.getElementById('loginError');
+
   errEl.style.display = 'none';
+  errEl.textContent = '';
+
+  if (!email || !pass) {
+    errEl.textContent = 'Please enter admin email and password.';
+    errEl.style.display = 'block';
+    return;
+  }
+
   try {
-    const data = await api('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password: pass }) });
-    if (data.user && data.user.role !== 'admin') {
+    const data = await api('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({
+        email: email,
+        password: pass
+      })
+    });
+
+    if (!data.user || data.user.role !== 'admin') {
       errEl.textContent = 'This account does not have admin access.';
       errEl.style.display = 'block';
       return;
     }
+
     authToken = data.token;
-    localStorage.setItem('tm_auth_token', authToken);
+
+    localStorage.setItem('tm_auth_token', data.token);
+    localStorage.setItem('thushanAdminToken', data.token);
+    localStorage.setItem('thushanUserToken', data.token);
+    localStorage.setItem('tm_current_user', JSON.stringify(data.user));
+
     hideLogin();
-    toast('Login successful!', 'success');
-    syncAll();
-  } catch(e) {
+
+    toast('Admin login successful!', 'success');
+
+    await syncAll();
+  } catch (e) {
     errEl.textContent = e.message || 'Login failed.';
     errEl.style.display = 'block';
   }
@@ -609,9 +678,17 @@ async function doLogin() {
 
 function adminLogout() {
   authToken = '';
+
   localStorage.removeItem('tm_auth_token');
+  localStorage.removeItem('thushanAdminToken');
+  localStorage.removeItem('thushanUserToken');
+  localStorage.removeItem('tm_current_user');
+
   toast('Logged out.', 'info');
-  setTimeout(() => { showLogin(); }, 600);
+
+  setTimeout(() => {
+    showLogin();
+  }, 600);
 }
 
 // ── Nav ──
@@ -1205,12 +1282,30 @@ function fmtDate(dt) {
 }
 
 // ── Boot ──
+// ── Boot ──
 (async function boot() {
-  const savedToken = localStorage.getItem('tm_auth_token');
-  if (!savedToken) { showLogin(); return; }
+  const savedToken =
+    localStorage.getItem('tm_auth_token') ||
+    localStorage.getItem('thushanAdminToken') ||
+    localStorage.getItem('thushanUserToken') ||
+    '';
+
+  if (!savedToken) {
+    showLogin();
+    return;
+  }
+
   authToken = savedToken;
+
   try {
-    await api('/api/auth/me');
+    const me = await api('/api/auth/me');
+
+    if (!me.user || me.user.role !== 'admin') {
+      adminLogout();
+      showLogin();
+      return;
+    }
+
     await syncAll();
   } catch {
     showLogin();
