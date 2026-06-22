@@ -701,7 +701,7 @@ app.post('/api/orders', requireAuth, asyncHandler(async (req, res) => {
     const finalDiscount = Number(discount || 0);
     const finalTotal = Number(total || finalSubtotal - finalDiscount);
 
-    const tempOrderNo = `TMP-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+    const tempOrderNo = `T${Date.now().toString().slice(-12)}`;
 
     const [orderResult] = await connection.query(
       `INSERT INTO orders
@@ -793,7 +793,8 @@ app.post('/api/orders', requireAuth, asyncHandler(async (req, res) => {
     await connection.rollback();
     console.error('Order save error:', err);
     res.status(500).json({
-      message: 'Could not save order.'
+      message: 'Could not save order.',
+      error: err.message
     });
   } finally {
     connection.release();
