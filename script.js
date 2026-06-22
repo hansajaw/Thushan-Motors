@@ -14,6 +14,8 @@ const API_BASE =
     ? 'http://localhost:3000'
     : 'https://thushan-motors.vercel.app';
 
+const GOOGLE_CLIENT_ID = '727542561981-cc0ivqbgb2f27hqk8h04h7tjrc2js1vr.apps.googleusercontent.com'; 
+
 /* ── PRODUCTS DATA ──
    IMPORTANT: products now come from the REAL database via the backend
    API (/api/products) — the exact same data admin.html reads and writes
