@@ -87,23 +87,6 @@
       </ul>
     </div>
 
-    <div class="footer-col">
-      <h4>Legal</h4>
-      <ul>
-        <li>
-          <a href="privacy.html">
-            <i class="fa-solid fa-shield-halved"></i> Privacy Policy
-          </a>
-        </li>
-
-        <li>
-          <a href="terms.html">
-            <i class="fa-solid fa-file-contract"></i> Terms & Conditions
-          </a>
-        </li>
-      </ul>
-    </div>
-
   </div>
 
   <hr class="foot-divider">
