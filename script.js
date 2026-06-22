@@ -9,10 +9,7 @@
    ALWAYS on the same origin — this should stay '' (empty) unless you
    deliberately host the frontend on a different domain than the backend.
 ── */
-const API_BASE =
-  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:3000'
-    : 'https://thushan-motors.vercel.app';
+const API_BASE = 'https://thushan-motors.vercel.app';
 
 const GOOGLE_CLIENT_ID = '727542561981-cc0ivqbgb2f27hqk8h04h7tjrc2js1vr.apps.googleusercontent.com'; 
 
@@ -1189,6 +1186,16 @@ async function confirmOrder(){
     return;
   }
 
+  const user = getCurrentUser();
+  const token = localStorage.getItem('thushanUserToken');
+
+  if(!user || !token){
+    closeCheckoutModal();
+    openLogin();
+    showToast('Please login again before placing order.');
+    return;
+  }
+
   try{
     if(btn){
       btn.disabled = true;
@@ -1198,6 +1205,14 @@ async function confirmOrder(){
     const subtotal = cartTotal();
     const deliveryCharge = getDeliveryCharge();
     const total = subtotal + deliveryCharge;
+
+    const fullDeliveryAddress = [
+      details.street,
+      details.address,
+      details.city,
+      details.district,
+      details.province ? details.province + ' Province' : ''
+    ].filter(Boolean).join(', ');
 
     const paymentData = {
       method: details.paymentMethod
@@ -1212,20 +1227,61 @@ async function confirmOrder(){
     }
 
     const orderPayload = {
+      customerName: details.name,
+      customerPhone: details.phone,
+
+      deliveryName: details.name,
+      deliveryPhone: details.phone,
+      deliveryAddress: fullDeliveryAddress,
+      deliveryDistrict: details.district,
+      deliveryNotes: [
+        details.notes ? 'Notes: ' + details.notes : '',
+        details.landmark ? 'Landmark: ' + details.landmark : '',
+        details.label ? 'Address type: ' + details.label : ''
+      ].filter(Boolean).join(' | '),
+
+      paymentMethod: details.paymentMethod,
+
       items: cart.map(function(item){
         return {
           productId: item.id,
           name: item.name,
           price: Number(item.price),
           quantity: Number(item.qty),
-          img: item.img
+          subtotal: Number(item.price) * Number(item.qty)
         };
       }),
 
       subtotal: subtotal,
+      discount: 0,
+      total: total
+    };
+
+    const response = await fetch(API_BASE + '/api/orders', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+      },
+      body: JSON.stringify(orderPayload)
+    });
+
+    const data = await response.json();
+
+    if(!response.ok){
+      throw new Error(data.message || 'Could not save order.');
+    }
+
+    const savedOrder = data.order || {};
+
+    const receiptOrder = {
+      id: savedOrder.id,
+      orderNo: savedOrder.orderNo || savedOrder.orderNumber || 'Pending',
+      customer: user,
+      items: orderPayload.items,
+      subtotal: subtotal,
       deliveryCharge: deliveryCharge,
       total: total,
-
       delivery: {
         name: details.name,
         phone: details.phone,
@@ -1238,19 +1294,23 @@ async function confirmOrder(){
         label: details.label,
         notes: details.notes
       },
-
       paymentMethod: details.paymentMethod,
-      payment: paymentData
+      payment: paymentData,
+      status: savedOrder.status || 'pending',
+      createdAt: new Date().toISOString()
     };
 
-    const order = createLocalOrder(orderPayload);
+    const orders = JSON.parse(localStorage.getItem('tm_orders') || '[]');
+    orders.push(receiptOrder);
+    localStorage.setItem('tm_orders', JSON.stringify(orders));
 
     saveDeliveryDetails(details);
     closeCheckoutModal();
-    showOrderSuccess(order);
+    showOrderSuccess(receiptOrder);
 
   }catch(err){
-    errEl.textContent = err.message;
+    console.error('Order save error:', err);
+    errEl.textContent = err.message || 'Order could not be saved.';
     errEl.classList.add('visible');
   }finally{
     if(btn){

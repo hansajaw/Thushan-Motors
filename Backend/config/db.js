@@ -91,9 +91,11 @@ async function createTables() {
       user_id INT NOT NULL,
       subtotal DECIMAL(10,2) NOT NULL DEFAULT 0,
       discount DECIMAL(10,2) NOT NULL DEFAULT 0,
+      delivery_fee DECIMAL(10,2) NOT NULL DEFAULT 0,
       total DECIMAL(10,2) NOT NULL,
       delivery_name VARCHAR(150) NOT NULL,
       delivery_phone VARCHAR(30) NOT NULL,
+      delivery_email VARCHAR(190) DEFAULT '',
       delivery_address TEXT NOT NULL,
       delivery_district VARCHAR(100) NOT NULL,
       delivery_notes TEXT,
@@ -188,6 +190,9 @@ async function addColumnIfMissing(table, column, definition) {
 async function upgradeTables() {
   await addColumnIfMissing('products', 'buy_price', 'DECIMAL(10,2) DEFAULT NULL');
   await addColumnIfMissing('products', 'quantity', 'INT NOT NULL DEFAULT 0');
+
+  await addColumnIfMissing('orders', 'delivery_fee', 'DECIMAL(10,2) NOT NULL DEFAULT 0');
+  await addColumnIfMissing('orders', 'delivery_email', "VARCHAR(190) DEFAULT ''");
 
   await addColumnIfMissing('users', 'google_id', 'VARCHAR(128) DEFAULT NULL');
   await addColumnIfMissing('users', 'email_verified', 'TINYINT(1) NOT NULL DEFAULT 0');
