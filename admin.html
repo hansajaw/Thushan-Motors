@@ -897,6 +897,7 @@ let suppliers = load(K_SUPPLIERS,DEFAULT_SUPPLIERS);
 let customers = load(K_CUSTOMERS,DEFAULT_CUSTOMERS);
 let users = load(K_USERS,DEFAULT_USERS);
 let sales = load(K_SALES,DEFAULT_SALES);
+let cart = [];
 
 /*
   loadProductsFromServer() — Real backend eken products tika gena,
@@ -1017,13 +1018,13 @@ function showPage(name,el){
   el.classList.add('active');
   const titles={dashboard:'Dashboard',pos:'POS / New Sale',products:'Products',suppliers:'Suppliers',sales:'Sales History',customers:'Customers',reports:'Reports',messages:'Contact Messages',users:'Admin Users'};
   document.getElementById('topbarTitle').textContent=titles[name]||name;
-  if(name==='dashboard')renderDashboard();
-  if(name==='pos'){renderPOSCustomers();renderPOSResults();renderCart();}
+  if(name==='dashboard'){loadOrdersFromServer().then(()=>{loadProductsFromServer().then(()=>{loadCustomersFromServer().then(renderDashboard);});});}
+  if(name==='pos'){if(!products.length||!customers.length){showToast('Loading data...','success');Promise.all([loadProductsFromServer(),loadCustomersFromServer()]).then(()=>{renderPOSCustomers();renderPOSResults();renderCart();});}else{renderPOSCustomers();renderPOSResults();renderCart();}}
   if(name==='products')renderTable();
   if(name==='suppliers')renderSuppliers();
   if(name==='sales'){loadOrdersFromServer().then(renderSales);}
   if(name==='customers'){loadCustomersFromServer().then(renderCustomers);}
-  if(name==='reports')loadReport('sales_summary');
+  if(name==='reports'){loadOrdersFromServer().then(()=>loadProductsFromServer().then(()=>loadReport('sales_summary')));}
   if(name==='messages'){loadMessagesFromServer().then(renderMessages);}
   if(name==='users')renderUsers();
 }
@@ -1757,11 +1758,22 @@ function updateCartTotals(){
 async function completeSale(){
   if(!cart.length){showToast('Cart eka empty','error');return;}
 
-  const custId = document.getElementById('posCustomer').value
+  let custId = document.getElementById('posCustomer').value
     ? parseInt(document.getElementById('posCustomer').value) : null;
+
+  // Walk-in customer: auto-create if none selected
   if(!custId){
-    showToast('Customer kenek select karanna. Walk-in customer nam Customers page eken add karanna.','error');
-    return;
+    try{
+      const walkin = await apiFetch('/api/admin/customers',{
+        method:'POST',
+        body:JSON.stringify({name:'Walk-in Customer '+new Date().toLocaleTimeString('en-LK'), phone:'', email:''})
+      });
+      custId = walkin.id;
+      customers.push({id:walkin.id,name:walkin.name,phone:'',email:'',address:'',totalSpent:0,orderCount:0,createdAt:new Date().toISOString()});
+    }catch(err){
+      showToast('Walk-in customer create karanna baruwa: '+err.message,'error');
+      return;
+    }
   }
 
   const discountVal = Math.max(0, parseFloat(document.getElementById('cartDiscount').value||0));
