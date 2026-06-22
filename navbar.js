@@ -229,11 +229,6 @@
       <label>City <span style="color:var(--red)">*</span></label>
       <input type="text" id="checkoutCity" placeholder="Enter city">
     </div>
-
-    <div class="form-group">
-      <label>Building / House No / Street <span style="color:var(--red)">*</span></label>
-      <input type="text" id="checkoutStreet" placeholder="House no, street name">
-    </div>
   </div>
 
   <div class="checkout-grid-2">

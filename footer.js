@@ -42,6 +42,7 @@
         <li><a href="shop.html">Shop</a></li>
         <li><a href="about.html">About Us</a></li>
         <li><a href="contact.html">Contact Us</a></li>
+        <li><a href="orders.html">My Orders</a></li>
       </ul>
     </div>
 
@@ -67,7 +68,7 @@
         </li>
 
         <li>
-          <a href="tel:+94700000000">
+          <a href="tel:+94382244155">
             <i class="fa-solid fa-phone"></i> +94 38 224 4155
           </a>
         </li>
@@ -86,12 +87,32 @@
       </ul>
     </div>
 
+    <div class="footer-col">
+      <h4>Legal</h4>
+      <ul>
+        <li>
+          <a href="privacy.html">
+            <i class="fa-solid fa-shield-halved"></i> Privacy Policy
+          </a>
+        </li>
+
+        <li>
+          <a href="terms.html">
+            <i class="fa-solid fa-file-contract"></i> Terms & Conditions
+          </a>
+        </li>
+      </ul>
+    </div>
+
   </div>
 
   <hr class="foot-divider">
 
   <p class="foot-copy">
     © ${new Date().getFullYear()} Thushan Motors. All Rights Reserved.
+    <br>
+    <a href="privacy.html">Privacy Policy</a> |
+    <a href="terms.html">Terms & Conditions</a>
   </p>
 </footer>
 `;

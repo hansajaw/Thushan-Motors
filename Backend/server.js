@@ -29,10 +29,15 @@ const allowedOrigins = [
   'http://127.0.0.1:3000',
   'http://localhost:5500',
   'http://127.0.0.1:5500',
-  'https://thushan-motors-3iqp.vercel.app',
-  'https://thushan-motors.vercel.app'
-];
 
+  // Old Vercel frontend domains
+  'https://thushan-motors-3iqp.vercel.app',
+  'https://thushan-motors.vercel.app',
+
+  // New custom domain
+  'https://thushanmotors.lk',
+  'https://www.thushanmotors.lk'
+];
 app.use(cors({
   origin: function(origin, callback){
     if(!origin || allowedOrigins.includes(origin)){
