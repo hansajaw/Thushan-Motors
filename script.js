@@ -1716,6 +1716,194 @@ function loadShopFromUrl(){
   applyFilters();
 }
 
+function escapeHTML(text){
+  return String(text || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function renderStars(rating){
+  const full = Math.max(0, Math.min(5, Number(rating || 0)));
+  let html = '';
+
+  for(let i = 1; i <= 5; i++){
+    html += i <= full
+      ? '<i class="fa-solid fa-star"></i>'
+      : '<i class="fa-regular fa-star"></i>';
+  }
+
+  return html;
+}
+
+async function loadReviewsSummary(){
+  if(!$('reviewsAvg') || !$('reviewsCount') || !$('reviewsStars')){
+    return;
+  }
+
+  try{
+    const res = await fetch(API_BASE + '/api/reviews/summary');
+    const data = await res.json();
+
+    const average = Number(data.average || 0);
+    const count = Number(data.count || 0);
+
+    $('reviewsAvg').textContent = average.toFixed(1);
+    $('reviewsCount').textContent = count > 0
+      ? 'Based on ' + count + ' real customer review' + (count === 1 ? '' : 's')
+      : 'No reviews yet';
+
+    $('reviewsStars').innerHTML = renderStars(Math.round(average));
+  }catch(err){
+    console.error('Review summary error:', err);
+  }
+}
+
+async function loadReviewsFromServer(){
+  const grid = $('reviewsGrid');
+
+  if(!grid){
+    return;
+  }
+
+  try{
+    const res = await fetch(API_BASE + '/api/reviews');
+    const reviews = await res.json();
+
+    if(!Array.isArray(reviews) || reviews.length === 0){
+      grid.innerHTML = `
+        <div class="reviews-empty">
+          <i class="fa-solid fa-comment-dots"></i>
+          <h3>No customer reviews yet</h3>
+          <p>Be the first customer to share your experience.</p>
+        </div>
+      `;
+      return;
+    }
+
+    grid.innerHTML = reviews.map(function(review){
+      const firstLetter = (review.name || 'C').charAt(0).toUpperCase();
+
+      return `
+        <div class="customer-review-card">
+          <div class="review-top">
+            <div class="review-avatar">${escapeHTML(firstLetter)}</div>
+            <div>
+              <h4>${escapeHTML(review.name || 'Customer')}</h4>
+              <span>${escapeHTML(review.location || 'Sri Lanka')}</span>
+            </div>
+          </div>
+
+          <div class="review-stars">
+            ${renderStars(review.rating)}
+          </div>
+
+          <p>${escapeHTML(review.message)}</p>
+
+          <div class="review-tag">
+            <i class="fa-solid fa-circle-check"></i> ${escapeHTML(review.tag || 'Customer Feedback')}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }catch(err){
+    console.error('Load reviews error:', err);
+    grid.innerHTML = `
+      <div class="reviews-empty">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <h3>Could not load reviews</h3>
+        <p>Please refresh the page and try again.</p>
+      </div>
+    `;
+  }
+}
+
+function updateReviewFormState(){
+  const user = getCurrentUser();
+  const note = $('reviewLoginNote');
+  const box = $('reviewFormBox');
+
+  if(!box || !note){
+    return;
+  }
+
+  if(!user){
+    note.innerHTML = 'Please <a onclick="openLogin()">login</a> to write a real customer review.';
+  }else{
+    note.textContent = 'Posting as ' + (user.name || 'Customer');
+  }
+}
+
+async function submitReview(){
+  const user = getCurrentUser();
+
+  if(!user){
+    openLogin();
+    showToast('Please login to write a review.');
+    return;
+  }
+
+  const token = localStorage.getItem('thushanUserToken');
+
+  if(!token){
+    openLogin();
+    showToast('Please login again to submit your review.');
+    return;
+  }
+
+  const rating = $('reviewRating') ? $('reviewRating').value : '5';
+  const location = $('reviewLocation') ? $('reviewLocation').value.trim() : '';
+  const tag = $('reviewTag') ? $('reviewTag').value : 'Customer Feedback';
+  const message = $('reviewMessage') ? $('reviewMessage').value.trim() : '';
+
+  if(message.length < 10){
+    showToast('Please write at least 10 characters.');
+    return;
+  }
+
+  try{
+    const res = await fetch(API_BASE + '/api/reviews', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+      },
+      body: JSON.stringify({
+        rating,
+        location,
+        tag,
+        message
+      })
+    });
+
+    const data = await res.json();
+
+    if(!res.ok){
+      showToast('❌ ' + (data.message || 'Could not submit review.'));
+      return;
+    }
+
+    if($('reviewMessage')){
+      $('reviewMessage').value = '';
+    }
+
+    if($('reviewLocation')){
+      $('reviewLocation').value = '';
+    }
+
+    showToast('<i class="fa-solid fa-circle-check" style="color:var(--red)"></i> Review added. Thank you!');
+
+    await loadReviewsSummary();
+    await loadReviewsFromServer();
+    updateReviewFormState();
+  }catch(err){
+    console.error('Submit review error:', err);
+    showToast('⚠️ Server error. Please try again.');
+  }
+}
+
 /* ── PASSWORD STRENGTH ── */
 function checkPassStrength(val){
   const bar = $('passStrengthBar');
@@ -2059,6 +2247,10 @@ window.onload = async function(){
       streetGroup.style.display = 'none';
     }
   }
+
+    updateReviewFormState();
+  await loadReviewsSummary();
+  await loadReviewsFromServer();
 
   renderOrdersPage();
 };

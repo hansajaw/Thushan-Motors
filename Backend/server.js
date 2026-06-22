@@ -220,6 +220,18 @@ function mapMessage(row) {
   };
 }
 
+function mapReview(row) {
+  return {
+    id: row.id,
+    name: row.name,
+    location: row.location || '',
+    rating: Number(row.rating),
+    message: row.message,
+    tag: row.tag || 'Customer Feedback',
+    createdAt: row.created_at
+  };
+}
+
 // ---------- Auth middleware ----------
 
 async function requireAuth(req, res, next) {
@@ -742,6 +754,93 @@ app.post('/api/contact', asyncHandler(async (req, res) => {
 
   const [rows] = await pool.query('SELECT * FROM messages WHERE id = ?', [result.insertId]);
   res.status(201).json({ message: 'Message saved successfully.', data: mapMessage(rows[0]) });
+}));
+
+app.get('/api/reviews', asyncHandler(async (req, res) => {
+  const [rows] = await getPool().query(
+    `SELECT *
+     FROM reviews
+     WHERE approved = 1
+     ORDER BY id DESC
+     LIMIT 12`
+  );
+
+  res.json(rows.map(mapReview));
+}));
+
+app.get('/api/reviews/summary', asyncHandler(async (req, res) => {
+  const [rows] = await getPool().query(
+    `SELECT
+       COUNT(*) AS review_count,
+       COALESCE(AVG(rating), 0) AS average_rating
+     FROM reviews
+     WHERE approved = 1`
+  );
+
+  const summary = rows[0] || {};
+
+  res.json({
+    count: Number(summary.review_count || 0),
+    average: Number(summary.average_rating || 0).toFixed(1)
+  });
+}));
+
+app.post('/api/reviews', requireAuth, asyncHandler(async (req, res) => {
+  const { rating, message, location = '', tag = 'Customer Feedback' } = req.body;
+
+  const finalRating = Number(rating);
+  const finalMessage = String(message || '').trim();
+  const finalLocation = String(location || '').trim();
+  const finalTag = String(tag || 'Customer Feedback').trim();
+
+  if (!finalRating || finalRating < 1 || finalRating > 5) {
+    return res.status(400).json({ message: 'Please select a rating between 1 and 5.' });
+  }
+
+  if (finalMessage.length < 10) {
+    return res.status(400).json({ message: 'Review must be at least 10 characters.' });
+  }
+
+  if (finalMessage.length > 500) {
+    return res.status(400).json({ message: 'Review must be less than 500 characters.' });
+  }
+
+  const pool = getPool();
+
+  const [recentRows] = await pool.query(
+    `SELECT id
+     FROM reviews
+     WHERE user_id = ?
+       AND created_at > DATE_SUB(NOW(), INTERVAL 1 DAY)
+     LIMIT 1`,
+    [req.user.id]
+  );
+
+  if (recentRows.length) {
+    return res.status(429).json({ message: 'You can add only one review per day.' });
+  }
+
+  const [result] = await pool.query(
+    `INSERT INTO reviews
+      (user_id, name, location, rating, message, tag, approved)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [
+      req.user.id,
+      req.user.name,
+      finalLocation,
+      finalRating,
+      finalMessage,
+      finalTag,
+      1
+    ]
+  );
+
+  const [rows] = await pool.query('SELECT * FROM reviews WHERE id = ?', [result.insertId]);
+
+  res.status(201).json({
+    message: 'Thank you! Your review has been added.',
+    review: mapReview(rows[0])
+  });
 }));
 
 /*

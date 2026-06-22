@@ -70,110 +70,67 @@
     </div>
   </div>
 
-  <!-- CUSTOMER REVIEWS -->
+<!-- REAL CUSTOMER REVIEWS -->
 <section class="customer-reviews-section">
   <div class="sec-header-row sec-header">
     <div>
       <div class="eyebrow">Customer Trust</div>
-      <h2>Trusted by <span>Riders Islandwide</span></h2>
-      <p>See what customers think about Thushan Motors spare parts, service, and delivery.</p>
+      <h2>What Customers <span>Think About Us</span></h2>
+      <p>Real feedback from customers who use Thushan Motors for motorcycle spare parts.</p>
     </div>
 
     <div class="review-rating-summary">
-      <div class="rating-score">4.8</div>
+      <div class="rating-score" id="reviewsAvg">0.0</div>
       <div>
-        <div class="rating-stars">
-          <i class="fa-solid fa-star"></i>
-          <i class="fa-solid fa-star"></i>
-          <i class="fa-solid fa-star"></i>
-          <i class="fa-solid fa-star"></i>
-          <i class="fa-solid fa-star-half-stroke"></i>
+        <div class="rating-stars" id="reviewsStars">
+          <i class="fa-regular fa-star"></i>
+          <i class="fa-regular fa-star"></i>
+          <i class="fa-regular fa-star"></i>
+          <i class="fa-regular fa-star"></i>
+          <i class="fa-regular fa-star"></i>
         </div>
-        <span>Based on customer feedback</span>
+        <span id="reviewsCount">No reviews yet</span>
       </div>
     </div>
   </div>
 
-  <div class="reviews-highlight-grid">
-
-    <div class="customer-review-card">
-      <div class="review-top">
-        <div class="review-avatar">N</div>
-        <div>
-          <h4>Nimal Perera</h4>
-          <span>Panadura</span>
-        </div>
-      </div>
-
-      <div class="review-stars">
-        <i class="fa-solid fa-star"></i>
-        <i class="fa-solid fa-star"></i>
-        <i class="fa-solid fa-star"></i>
-        <i class="fa-solid fa-star"></i>
-        <i class="fa-solid fa-star"></i>
-      </div>
-
-      <p>
-        Good quality motorcycle parts and helpful service. I found the brake pads I needed quickly and the ordering process was easy.
-      </p>
-
-      <div class="review-tag">
-        <i class="fa-solid fa-circle-check"></i> Spare Parts Order
-      </div>
+  <div class="review-write-box" id="reviewFormBox">
+    <div>
+      <h3>Write a Review</h3>
+      <p>Share your experience with Thushan Motors.</p>
     </div>
 
-    <div class="customer-review-card">
-      <div class="review-top">
-        <div class="review-avatar">K</div>
-        <div>
-          <h4>Kasun Fernando</h4>
-          <span>Kalutara</span>
-        </div>
-      </div>
+    <div class="review-form-grid">
+      <select id="reviewRating">
+        <option value="5">★★★★★ 5 Stars</option>
+        <option value="4">★★★★☆ 4 Stars</option>
+        <option value="3">★★★☆☆ 3 Stars</option>
+        <option value="2">★★☆☆☆ 2 Stars</option>
+        <option value="1">★☆☆☆☆ 1 Star</option>
+      </select>
 
-      <div class="review-stars">
-        <i class="fa-solid fa-star"></i>
-        <i class="fa-solid fa-star"></i>
-        <i class="fa-solid fa-star"></i>
-        <i class="fa-solid fa-star"></i>
-        <i class="fa-solid fa-star"></i>
-      </div>
+      <input type="text" id="reviewLocation" placeholder="Your city, e.g. Panadura">
 
-      <p>
-        Thushan Motors helped me choose the correct part for my bike. The website is simple to use and the delivery service is convenient.
-      </p>
-
-      <div class="review-tag">
-        <i class="fa-solid fa-circle-check"></i> Customer Support
-      </div>
+      <select id="reviewTag">
+        <option value="Spare Parts Order">Spare Parts Order</option>
+        <option value="Customer Support">Customer Support</option>
+        <option value="Fast Delivery">Fast Delivery</option>
+        <option value="Online Shopping">Online Shopping</option>
+        <option value="Customer Feedback">Customer Feedback</option>
+      </select>
     </div>
 
-    <div class="customer-review-card">
-      <div class="review-top">
-        <div class="review-avatar">D</div>
-        <div>
-          <h4>Dilan Silva</h4>
-          <span>Colombo</span>
-        </div>
-      </div>
+    <textarea id="reviewMessage" placeholder="Write your honest review..." maxlength="500"></textarea>
 
-      <div class="review-stars">
-        <i class="fa-solid fa-star"></i>
-        <i class="fa-solid fa-star"></i>
-        <i class="fa-solid fa-star"></i>
-        <i class="fa-solid fa-star"></i>
-        <i class="fa-regular fa-star"></i>
-      </div>
+    <button class="review-submit-btn" onclick="submitReview()">
+      Submit Review <i class="fa-solid fa-paper-plane"></i>
+    </button>
 
-      <p>
-        Reasonable price and good customer care. I like that I can check products online before contacting the shop.
-      </p>
+    <p class="review-login-note" id="reviewLoginNote"></p>
+  </div>
 
-      <div class="review-tag">
-        <i class="fa-solid fa-circle-check"></i> Online Shopping
-      </div>
-    </div>
-
+  <div class="reviews-highlight-grid" id="reviewsGrid">
+    <div class="reviews-loading">Loading customer reviews...</div>
   </div>
 </section>
 
