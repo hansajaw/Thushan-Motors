@@ -551,10 +551,7 @@ let authToken =
   '';
 
 /* Backend API URL */
-const ADMIN_API_BASE =
-  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:3000'
-    : 'https://thushan-motors.vercel.app';
+const ADMIN_API_BASE = 'https://thushan-motors.vercel.app';
 
 // ── Toast ──
 function toast(msg, type = 'success') {
@@ -1281,7 +1278,6 @@ function fmtDate(dt) {
   return d.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' }) + ' ' + d.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
 }
 
-// ── Boot ──
 // ── Boot ──
 (async function boot() {
   const savedToken =
