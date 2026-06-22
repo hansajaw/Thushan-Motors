@@ -16,6 +16,7 @@ const API_BASE =
 
 const GOOGLE_CLIENT_ID = '727542561981-cc0ivqbgb2f27hqk8h04h7tjrc2js1vr.apps.googleusercontent.com'; 
 
+let pendingVerifyEmail = '';
 /* ── PRODUCTS DATA ──
    IMPORTANT: products now come from the REAL database via the backend
    API (/api/products) — the exact same data admin.html reads and writes
@@ -314,13 +315,170 @@ function updateNavAuth(){
   }
 }
 
+function ensureAuthExtraUI(){
+  const loginForm = $('loginForm');
+  const registerForm = $('registerForm');
+  const modal = $('authModal');
+
+  if(loginForm && !$('googleLoginBtn')){
+    const loginBtn = loginForm.querySelector('.auth-submit-btn');
+
+    if(loginBtn){
+      loginBtn.insertAdjacentHTML('afterend', `
+        <div class="auth-divider"><span></span><em>or</em><span></span></div>
+        <div id="googleLoginBtn" class="google-btn-box"></div>
+      `);
+    }
+  }
+
+  if(registerForm && !$('googleRegisterBtn')){
+    const registerBtn = registerForm.querySelector('.auth-submit-btn');
+
+    if(registerBtn){
+      registerBtn.insertAdjacentHTML('afterend', `
+        <div class="auth-divider"><span></span><em>or</em><span></span></div>
+        <div id="googleRegisterBtn" class="google-btn-box"></div>
+      `);
+    }
+  }
+
+  if(modal && !$('otpForm')){
+    modal.insertAdjacentHTML('beforeend', `
+      <div class="auth-form hidden" id="otpForm">
+        <button class="modal-close" onclick="closeModal()" aria-label="Close modal">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <div class="auth-logo">
+          <div class="auth-logo-icon">
+            <i class="fa-solid fa-envelope-circle-check"></i>
+          </div>
+
+          <h2>Verify Email</h2>
+          <p>Enter the 6-digit OTP sent to your email.</p>
+        </div>
+
+        <div class="form-group">
+          <label>OTP Code</label>
+          <input type="text" id="otpCode" placeholder="Enter 6-digit OTP" maxlength="6" inputmode="numeric">
+        </div>
+
+        <div class="auth-error" id="otpError"></div>
+
+        <button class="auth-submit-btn" onclick="verifyOtp()">
+          Verify Email <i class="fa-solid fa-circle-check"></i>
+        </button>
+
+        <p class="auth-switch" style="margin-bottom:8px">
+          Didn't receive the code? <a onclick="resendOtp()">Resend OTP</a>
+        </p>
+
+        <p class="auth-switch">
+          Back to <a onclick="switchToLogin()">Login</a>
+        </p>
+      </div>
+    `);
+  }
+}
+
+function renderGoogleButtons(){
+  ensureAuthExtraUI();
+
+  if(!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.includes('PASTE_YOUR_GOOGLE_CLIENT_ID')){
+    return;
+  }
+
+  if(!window.google || !google.accounts || !google.accounts.id){
+    setTimeout(renderGoogleButtons, 400);
+    return;
+  }
+
+  google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: handleGoogleCredential
+  });
+
+  const loginBtn = $('googleLoginBtn');
+  const registerBtn = $('googleRegisterBtn');
+
+  if(loginBtn){
+    loginBtn.innerHTML = '';
+    google.accounts.id.renderButton(loginBtn, {
+      theme: 'outline',
+      size: 'large',
+      width: 300,
+      text: 'signin_with'
+    });
+  }
+
+  if(registerBtn){
+    registerBtn.innerHTML = '';
+    google.accounts.id.renderButton(registerBtn, {
+      theme: 'outline',
+      size: 'large',
+      width: 300,
+      text: 'signup_with'
+    });
+  }
+}
+
+async function handleGoogleCredential(response){
+  try{
+    const res = await fetch(API_BASE + '/api/auth/google', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ credential: response.credential })
+    });
+
+    const data = await res.json();
+
+    if(!res.ok){
+      showToast('❌ ' + (data.message || 'Google login failed.'));
+      return;
+    }
+
+    setCurrentUser({
+      id: data.user.id,
+      name: data.user.name,
+      email: data.user.email,
+      phone: data.user.phone || '',
+      role: data.user.role
+    });
+
+    localStorage.setItem('thushanUserToken', data.token);
+
+    updateNavAuth();
+    closeModal();
+
+    if(data.user.role === 'admin'){
+      showToast('🔓 Admin login successful!');
+      setTimeout(function(){
+        window.location.href = 'admin.html';
+      }, 500);
+      return;
+    }
+
+    showToast('<i class="fa-solid fa-circle-check" style="color:var(--red)"></i> Google login successful!');
+    renderOrdersPage();
+  }catch(err){
+    console.error('Google login error:', err);
+    showToast('⚠️ Google login failed. Please try again.');
+  }
+}
+
 function openLogin(){
   if(!$('authModal')){
     return;
   }
 
+  ensureAuthExtraUI();
+
   $('loginForm').classList.remove('hidden');
   $('registerForm').classList.add('hidden');
+
+  if($('otpForm')){
+    $('otpForm').classList.add('hidden');
+  }
 
   clearAuthErrors();
 
@@ -333,6 +491,8 @@ function openLogin(){
     if($('loginEmail')){
       $('loginEmail').focus();
     }
+
+    renderGoogleButtons();
   }, 300);
 }
 
@@ -341,8 +501,14 @@ function openRegister(){
     return;
   }
 
+  ensureAuthExtraUI();
+
   $('registerForm').classList.remove('hidden');
   $('loginForm').classList.add('hidden');
+
+  if($('otpForm')){
+    $('otpForm').classList.add('hidden');
+  }
 
   clearAuthErrors();
 
@@ -355,6 +521,8 @@ function openRegister(){
     if($('regName')){
       $('regName').focus();
     }
+
+    renderGoogleButtons();
   }, 300);
 }
 
@@ -380,7 +548,7 @@ function switchToLogin(){
 }
 
 function clearAuthErrors(){
-  ['loginError','registerError','loginSuccess','registerSuccess'].forEach(function(id){
+  ['loginError','registerError','otpError','loginSuccess','registerSuccess'].forEach(function(id){
     const el = $(id);
 
     if(el){
@@ -406,6 +574,132 @@ function togglePass(inputId, icon){
   }
 }
 
+function switchToOtp(email){
+  ensureAuthExtraUI();
+
+  pendingVerifyEmail = email || pendingVerifyEmail || '';
+  sessionStorage.setItem('tm_pending_verify_email', pendingVerifyEmail);
+
+  if($('loginForm')){
+    $('loginForm').classList.add('hidden');
+  }
+
+  if($('registerForm')){
+    $('registerForm').classList.add('hidden');
+  }
+
+  if($('otpForm')){
+    $('otpForm').classList.remove('hidden');
+  }
+
+  clearAuthErrors();
+
+  setTimeout(function(){
+    if($('otpCode')){
+      $('otpCode').focus();
+    }
+  }, 250);
+}
+
+async function verifyOtp(){
+  const otp = $('otpCode') ? $('otpCode').value.trim() : '';
+  const errEl = $('otpError');
+
+  pendingVerifyEmail = pendingVerifyEmail || sessionStorage.getItem('tm_pending_verify_email') || '';
+
+  if(!errEl){
+    return;
+  }
+
+  if(!pendingVerifyEmail){
+    errEl.textContent = 'Email not found. Please register again.';
+    errEl.classList.add('visible');
+    return;
+  }
+
+  if(!otp){
+    errEl.textContent = 'Please enter the OTP code.';
+    errEl.classList.add('visible');
+    return;
+  }
+
+  try{
+    const response = await fetch(API_BASE + '/api/auth/verify-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: pendingVerifyEmail,
+        otp: otp
+      })
+    });
+
+    const data = await response.json();
+
+    if(!response.ok){
+      errEl.textContent = '❌ ' + (data.message || 'OTP verification failed.');
+      errEl.classList.add('visible');
+      return;
+    }
+
+    setCurrentUser({
+      id: data.user.id,
+      name: data.user.name,
+      email: data.user.email,
+      phone: data.user.phone || '',
+      role: data.user.role
+    });
+
+    localStorage.setItem('thushanUserToken', data.token);
+
+    updateNavAuth();
+    closeModal();
+
+    showToast('<i class="fa-solid fa-circle-check" style="color:var(--red)"></i> Email verified successfully!');
+
+    if($('otpCode')){
+      $('otpCode').value = '';
+    }
+
+    pendingVerifyEmail = '';
+    sessionStorage.removeItem('tm_pending_verify_email');
+
+    renderOrdersPage();
+  }catch(err){
+    console.error('OTP verify error:', err);
+    errEl.textContent = '⚠️ Server error. Please try again.';
+    errEl.classList.add('visible');
+  }
+}
+
+async function resendOtp(){
+  pendingVerifyEmail = pendingVerifyEmail || sessionStorage.getItem('tm_pending_verify_email') || '';
+
+  if(!pendingVerifyEmail){
+    showToast('Email not found. Please try again.');
+    return;
+  }
+
+  try{
+    const response = await fetch(API_BASE + '/api/auth/resend-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: pendingVerifyEmail })
+    });
+
+    const data = await response.json();
+
+    if(!response.ok){
+      showToast('❌ ' + (data.message || 'Failed to resend OTP.'));
+      return;
+    }
+
+    showToast('📧 New OTP sent to your email.');
+  }catch(err){
+    console.error('Resend OTP error:', err);
+    showToast('⚠️ Failed to resend OTP.');
+  }
+}
+
 async function doLogin(){
   clearAuthErrors();
 
@@ -414,13 +708,13 @@ async function doLogin(){
   const errEl = $('loginError');
 
   if(!email || !password){
-    errEl.textContent = '📧 Email සහ Password දෙකම ඩාල්වා ගන්න.';
+    errEl.textContent = '📧 Please enter both email and password.';
     errEl.classList.add('visible');
     return;
   }
 
   if(!/\S+@\S+\.\S+/.test(email)){
-    errEl.textContent = '❌ තිබෙන ඉතා වලිඩ ඉමේල්  අට කරන්න.';
+    errEl.textContent = '❌ Please enter a valid email address.';
     errEl.classList.add('visible');
     return;
   }
@@ -435,12 +729,17 @@ async function doLogin(){
     const data = await response.json();
 
     if (!response.ok) {
-      errEl.textContent = '❌ ' + (data.message || 'Login අසාර්ථක විය.');
+      if(data.needsVerification){
+        switchToOtp(data.email || email);
+        showToast('📧 Please verify your email first.');
+        return;
+      }
+
+      errEl.textContent = '❌ ' + (data.message || 'Login failed.');
       errEl.classList.add('visible');
       return;
     }
 
-    // Login successful
     setCurrentUser({
       id: data.user.id,
       name: data.user.name,
@@ -449,30 +748,27 @@ async function doLogin(){
       role: data.user.role
     });
 
-    // Save token for authenticated requests
     localStorage.setItem('thushanUserToken', data.token);
 
-    // If admin, redirect to admin panel
     if (data.user.role === 'admin') {
       closeModal();
       setTimeout(() => {
         window.location.href = 'admin.html';
       }, 500);
-      showToast('🔓 Admin ගිණුමට ඉඩ දීමට සාර්ථක විය!');
+      showToast('🔓 Admin login successful!');
       return;
     }
 
-    // Otherwise, stay on current page (customer account)
     updateNavAuth();
     closeModal();
-    showToast('<i class="fa-solid fa-circle-check" style="color:var(--red)"></i> ยินดีต้อนรับ ' + data.user.name.split(' ')[0] + '!');
+    showToast('<i class="fa-solid fa-circle-check" style="color:var(--red)"></i> Welcome ' + data.user.name.split(' ')[0] + '!');
 
     $('loginEmail').value = '';
     $('loginPassword').value = '';
 
     renderOrdersPage();
   } catch (err) {
-    errEl.textContent = '⚠️ Server එක දිගට සම්බන්ධ කරගන්න බැහැ. නැවත උත්සාහ කරන්න.';
+    errEl.textContent = '⚠️ Cannot connect to server. Please try again.';
     errEl.classList.add('visible');
     console.error('Login error:', err);
   }
@@ -489,25 +785,25 @@ async function doRegister(){
   const errEl = $('registerError');
 
   if(!name || !email || !password || !confirm){
-    errEl.textContent = '⚠️ සියලු අවශ්‍ය ක්ෂේත්‍ර පුරවන්න.';
+    errEl.textContent = '⚠️ Please fill all required fields.';
     errEl.classList.add('visible');
     return;
   }
 
   if(!/\S+@\S+\.\S+/.test(email)){
-    errEl.textContent = '❌ වලිඩ ඉමේල් ලිපිනය ඇතුල් කරන්න.';
+    errEl.textContent = '❌ Please enter a valid email address.';
     errEl.classList.add('visible');
     return;
   }
 
   if(password.length < 8){
-    errEl.textContent = 'Password අවම වශයෙන් අක්ෂර 8 ක් විය යුතුයි.';
+    errEl.textContent = 'Password must be at least 8 characters.';
     errEl.classList.add('visible');
     return;
   }
 
   if(password !== confirm){
-    errEl.textContent = 'මුරපද ගැලපෙන්නේ නැත. නැවත උත්සාහ කරන්න.';
+    errEl.textContent = 'Passwords do not match. Please try again.';
     errEl.classList.add('visible');
     return;
   }
@@ -522,12 +818,24 @@ async function doRegister(){
     const data = await response.json();
 
     if (!response.ok) {
-      errEl.textContent = '❌ ' + (data.message || 'ගිණුම තැනීම අසාර්ථක විය.');
+      errEl.textContent = '❌ ' + (data.message || 'Account creation failed.');
       errEl.classList.add('visible');
       return;
     }
 
-    // Registration successful
+    if(data.needsVerification){
+      switchToOtp(data.email || email);
+      showToast('📧 OTP sent to your email. Please verify your account.');
+
+      ['regPassword','regConfirm'].forEach(function(id){
+        if($(id)){
+          $(id).value = '';
+        }
+      });
+
+      return;
+    }
+
     setCurrentUser({
       id: data.user.id,
       name: data.user.name,
@@ -536,13 +844,12 @@ async function doRegister(){
       role: data.user.role
     });
 
-    // Save token
     localStorage.setItem('thushanUserToken', data.token);
 
     updateNavAuth();
     closeModal();
 
-    showToast('<i class="fa-solid fa-circle-check" style="color:var(--red)"></i> ගිණුම සාර්ථකව සාදන ලදි! ยินดีต้อนรับ, ' + name.split(' ')[0] + '!');
+    showToast('<i class="fa-solid fa-circle-check" style="color:var(--red)"></i> Account created successfully!');
 
     ['regName','regEmail','regPhone','regPassword','regConfirm'].forEach(function(id){
       if($(id)){
@@ -552,7 +859,7 @@ async function doRegister(){
 
     renderOrdersPage();
   } catch (err) {
-    errEl.textContent = '⚠️ Server එක දිගට සම්බන්ධ කරගන්න බැහැ.';
+    errEl.textContent = '⚠️ Cannot connect to server.';
     errEl.classList.add('visible');
     console.error('Register error:', err);
   }
@@ -560,6 +867,12 @@ async function doRegister(){
 
 function doLogout(){
   setCurrentUser(null);
+  localStorage.removeItem('thushanUserToken');
+
+  if(window.google && google.accounts && google.accounts.id){
+    google.accounts.id.disableAutoSelect();
+  }
+
   updateNavAuth();
   showToast('You have been logged out.');
   renderOrdersPage();
@@ -722,22 +1035,26 @@ function clearCheckoutError(){
 }
 
 function getCheckoutDetails(){
+  function val(id){
+    return $(id) ? $(id).value.trim() : '';
+  }
+
   return {
-    name: $('checkoutName').value.trim(),
-    phone: $('checkoutPhone').value.trim(),
-    province: $('checkoutProvince').value.trim(),
-    district: $('checkoutDistrict').value.trim(),
-    city: $('checkoutCity').value.trim(),
-    street: $('checkoutStreet').value.trim(),
-    landmark: $('checkoutLandmark').value.trim(),
-    address: $('checkoutAddress').value.trim(),
-    label: $('checkoutLabel').value,
-    paymentMethod: normalizePaymentMethod($('checkoutPayment').value),
-    notes: $('checkoutNotes').value.trim(),
-    cardNumber: $('checkoutCardNumber').value.trim(),
-    cardName: $('checkoutCardName').value.trim(),
-    cardExpiry: $('checkoutCardExpiry').value.trim(),
-    cardCvv: $('checkoutCardCvv').value.trim()
+    name: val('checkoutName'),
+    phone: val('checkoutPhone'),
+    province: val('checkoutProvince'),
+    district: val('checkoutDistrict'),
+    city: val('checkoutCity'),
+    street: val('checkoutStreet'),
+    landmark: val('checkoutLandmark'),
+    address: val('checkoutAddress'),
+    label: $('checkoutLabel') ? $('checkoutLabel').value : 'home',
+    paymentMethod: normalizePaymentMethod($('checkoutPayment') ? $('checkoutPayment').value : 'cash_on_delivery'),
+    notes: val('checkoutNotes'),
+    cardNumber: val('checkoutCardNumber'),
+    cardName: val('checkoutCardName'),
+    cardExpiry: val('checkoutCardExpiry'),
+    cardCvv: val('checkoutCardCvv')
   };
 }
 
@@ -748,7 +1065,6 @@ function validateCheckoutDetails(details){
   if(!details.province) return 'Please select your province.';
   if(!details.district) return 'Please enter your district.';
   if(!details.city) return 'Please enter your city.';
-  if(!details.street) return 'Please enter your house number / street.';
   if(!details.address) return 'Please enter your full delivery address.';
 
   details.paymentMethod = normalizePaymentMethod(details.paymentMethod);
@@ -1446,7 +1762,9 @@ document.addEventListener('keydown', function(e){
       return;
     }
 
-    if(!$('loginForm').classList.contains('hidden')){
+    if($('otpForm') && !$('otpForm').classList.contains('hidden')){
+      verifyOtp();
+    }else if(!$('loginForm').classList.contains('hidden')){
       doLogin();
     }else{
       doRegister();
@@ -1729,6 +2047,17 @@ window.onload = async function(){
     cardExpiryInput.addEventListener('input', function(){
       this.value = formatExpiryInput(this.value);
     });
+  }
+
+    ensureAuthExtraUI();
+  renderGoogleButtons();
+
+  if($('checkoutStreet')){
+    const streetGroup = $('checkoutStreet').closest('.form-group');
+
+    if(streetGroup){
+      streetGroup.style.display = 'none';
+    }
   }
 
   renderOrdersPage();
