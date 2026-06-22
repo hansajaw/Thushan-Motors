@@ -77,6 +77,18 @@ CREATE TABLE IF NOT EXISTS messages (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+ALTER TABLE orders
+ADD COLUMN customer_name VARCHAR(120) NOT NULL DEFAULT '',
+ADD COLUMN customer_phone VARCHAR(30) NOT NULL DEFAULT '',
+ADD COLUMN customer_email VARCHAR(160) NULL,
+ADD COLUMN delivery_address TEXT NULL,
+ADD COLUMN delivery_notes TEXT NULL,
+ADD COLUMN payment_method VARCHAR(50) DEFAULT 'cash_on_delivery',
+ADD COLUMN subtotal DECIMAL(10,2) DEFAULT 0,
+ADD COLUMN delivery_fee DECIMAL(10,2) DEFAULT 0,
+ADD COLUMN discount DECIMAL(10,2) DEFAULT 0,
+ADD COLUMN total DECIMAL(10,2) DEFAULT 0,
+ADD COLUMN status VARCHAR(40) DEFAULT 'pending';
 -- Starter product catalog (only needed if the table is empty)
 INSERT INTO products (name, brand, category, price, old_price, stock, featured, img, free_delivery)
 VALUES
