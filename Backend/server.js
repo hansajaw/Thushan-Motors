@@ -21,10 +21,27 @@ const ADMIN_KEY = process.env.ADMIN_KEY || 'dev_admin_key_change_me';
 const FRONTEND_DIR = path.join(__dirname, '..');
 
 app.use(helmet({ contentSecurityPolicy: false }));
-app.use(cors({ origin: process.env.FRONTEND_URL || true, credentials: true }));
-// Raised from 1mb to 6mb so admin product image uploads (which are sent
-// as base64 text inside the JSON body) have room to fit. A 2MB image file
-// becomes roughly 2.7MB once base64-encoded, so 6mb gives safe headroom.
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'http://localhost:5500',
+  'http://127.0.0.1:5500',
+  'https://thushan-motors-3iqp.vercel.app',
+  'https://thushan-motors.vercel.app'
+];
+
+app.use(cors({
+  origin: function(origin, callback){
+    if(!origin || allowedOrigins.includes(origin)){
+      return callback(null, true);
+    }
+
+    return callback(new Error('CORS blocked: ' + origin));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-admin-key']
+}));
 app.use(express.json({ limit: '6mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, limit: 250 }));
