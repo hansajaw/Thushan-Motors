@@ -325,6 +325,7 @@ input:checked + .slider:before { transform: translateX(20px); }
             </select>
           </div>
           <div class="form-group"><label>Selling Price (Rs.) *</label><input type="number" id="pf-price" step="0.01" min="0" required></div>
+          <div class="form-group"><label>Quantity in Stock</label><input type="number" id="pf-quantity" min="0" step="1" placeholder="0" value="0"></div>
           <div class="form-group"><label>Buy Price / Cost (Rs.)</label><input type="number" id="pf-buy-price" step="0.01" min="0" placeholder="Cost price for profit calc"></div>
           <div class="form-group"><label>Old Price (Rs.) — for discount badge</label><input type="number" id="pf-old-price" step="0.01" min="0"></div>
           <div class="form-group">
@@ -377,6 +378,7 @@ input:checked + .slider:before { transform: translateX(20px); }
               <th>Category</th>
               <th>Buy Price</th>
               <th>Sell Price</th>
+              <th style="text-align:center">Qty</th>
               <th>Featured</th>
               <th>Stock</th>
               <th>Actions</th>
@@ -880,11 +882,15 @@ function renderProductsTable() {
   const tbody = document.getElementById('products-tbody');
   tbody.innerHTML = '';
   const filtered = products.filter(p => p.name.toLowerCase().includes(q) || (p.brand||'').toLowerCase().includes(q) || (p.category||'').toLowerCase().includes(q));
-  if (!filtered.length) { tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--text3)">No products found.</td></tr>`; return; }
+  if (!filtered.length) { tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--text3)">No products found.</td></tr>`; return; }
   filtered.forEach(p => {
     const img = p.img
       ? `<img src="${p.img}" style="width:38px;height:38px;object-fit:cover;border-radius:5px;border:1px solid var(--border)">`
       : `<div style="width:38px;height:38px;background:var(--bg4);border-radius:5px;display:flex;align-items:center;justify-content:center"><i class="fa-solid fa-image" style="color:var(--text3)"></i></div>`;
+    const qtyVal = p.quantity != null ? p.quantity : 0;
+    const qtyBadge = qtyVal > 0
+      ? `<span class="badge success">${qtyVal}</span>`
+      : `<span class="badge danger">0</span>`;
     tbody.innerHTML += `<tr>
       <td>${img}</td>
       <td><strong>${p.name}</strong></td>
@@ -892,6 +898,7 @@ function renderProductsTable() {
       <td><span class="badge info">${p.category}</span></td>
       <td style="color:var(--text2)">${p.buyPrice != null ? 'Rs. ' + Number(p.buyPrice).toFixed(2) : '<span style="color:var(--text3)">—</span>'}</td>
       <td style="font-weight:600;color:var(--green)">Rs. ${Number(p.price).toFixed(2)}</td>
+      <td style="text-align:center">${qtyBadge}</td>
       <td>${p.featured ? '<span class="badge success">Yes</span>' : '<span style="color:var(--text3)">—</span>'}</td>
       <td>${p.stock ? '<span class="badge success">In Stock</span>' : '<span class="badge danger">Out</span>'}</td>
       <td>
@@ -922,6 +929,7 @@ function openProductForm(p = null) {
   }
   document.getElementById('pf-category').value = p ? p.category : '';
   document.getElementById('pf-price').value = p ? p.price : '';
+  document.getElementById('pf-quantity').value = (p && p.quantity != null) ? p.quantity : 0;
   document.getElementById('pf-buy-price').value = (p && p.buyPrice != null) ? p.buyPrice : '';
   document.getElementById('pf-old-price').value = (p && p.oldPrice != null) ? p.oldPrice : '';
   document.getElementById('pf-img-url').value = p ? (p.img || '') : '';
@@ -944,13 +952,30 @@ function closeProductForm() { document.getElementById('product-form-card').style
 function handleImgUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
+  if (!file.type.startsWith('image/')) { toast('Please select a PNG or JPG image.', 'danger'); return; }
+
   const reader = new FileReader();
   reader.onload = e => {
-    const b64 = e.target.result;
-    document.getElementById('pf-img-base64').value = b64;
-    document.getElementById('pf-img-url').value = '';
-    document.getElementById('pf-img-preview').src = b64;
-    document.getElementById('pf-img-preview-box').style.display = 'flex';
+    const img = new Image();
+    img.onload = () => {
+      // Resize to max 800px wide/tall, compress to JPEG quality 0.75
+      const MAX = 800;
+      let w = img.width, h = img.height;
+      if (w > MAX || h > MAX) {
+        if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+        else { w = Math.round(w * MAX / h); h = MAX; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const b64 = canvas.toDataURL('image/jpeg', 0.75);
+      document.getElementById('pf-img-base64').value = b64;
+      document.getElementById('pf-img-url').value = '';
+      document.getElementById('pf-img-preview').src = b64;
+      document.getElementById('pf-img-preview-box').style.display = 'flex';
+      toast('Image loaded & compressed ✓', 'success');
+    };
+    img.src = e.target.result;
   };
   reader.readAsDataURL(file);
 }
@@ -973,6 +998,7 @@ async function saveProduct() {
     brand: brandVal || null,
     category,
     price,
+    quantity: parseInt(document.getElementById('pf-quantity').value) || 0,
     buyPrice: buyPriceVal !== '' ? parseFloat(buyPriceVal) : null,
     oldPrice: oldPriceVal !== '' ? parseFloat(oldPriceVal) : null,
     img: imgB64 || imgUrl || '',

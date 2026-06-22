@@ -74,6 +74,7 @@ async function createTables() {
       price DECIMAL(10,2) NOT NULL,
       old_price DECIMAL(10,2) DEFAULT NULL,
       buy_price DECIMAL(10,2) DEFAULT NULL,
+      quantity INT NOT NULL DEFAULT 0,
       stock TINYINT(1) NOT NULL DEFAULT 1,
       featured TINYINT(1) NOT NULL DEFAULT 0,
       img LONGTEXT,
@@ -186,6 +187,7 @@ async function addColumnIfMissing(table, column, definition) {
 
 async function upgradeTables() {
   await addColumnIfMissing('products', 'buy_price', 'DECIMAL(10,2) DEFAULT NULL');
+  await addColumnIfMissing('products', 'quantity', 'INT NOT NULL DEFAULT 0');
 
   await addColumnIfMissing('users', 'google_id', 'VARCHAR(128) DEFAULT NULL');
   await addColumnIfMissing('users', 'email_verified', 'TINYINT(1) NOT NULL DEFAULT 0');

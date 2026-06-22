@@ -1127,13 +1127,13 @@ app.get('/api/admin/customers', requireAdmin, asyncHandler(async (req, res) => {
 }));
 
 app.post('/api/admin/products', requireAdmin, asyncHandler(async (req, res) => {
-  const { name, brand = null, category, price, oldPrice = null, buyPrice = null, stock = true, featured = false, img = '', freeDelivery = false } = req.body;
+  const { name, brand = null, category, price, oldPrice = null, buyPrice = null, quantity = 0, stock = true, featured = false, img = '', freeDelivery = false } = req.body;
   if (!name || !category || price === undefined) return res.status(400).json({ message: 'Name, category, and price are required.' });
 
   const pool = getPool();
   const [result] = await pool.query(
-    `INSERT INTO products (name, brand, category, price, old_price, buy_price, stock, featured, img, free_delivery)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO products (name, brand, category, price, old_price, buy_price, quantity, stock, featured, img, free_delivery)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       String(name).trim(),
       brand || null,
@@ -1141,6 +1141,7 @@ app.post('/api/admin/products', requireAdmin, asyncHandler(async (req, res) => {
       Number(price),
       oldPrice === '' || oldPrice === null ? null : Number(oldPrice),
       buyPrice === '' || buyPrice === null ? null : Number(buyPrice),
+      Math.max(0, Number(quantity) || 0),
       stock ? 1 : 0,
       featured ? 1 : 0,
       img,
@@ -1166,6 +1167,7 @@ app.patch('/api/admin/products/:id', requireAdmin, asyncHandler(async (req, res)
     price: 'price',
     oldPrice: 'old_price',
     buyPrice: 'buy_price',
+    quantity: 'quantity',
     stock: 'stock',
     featured: 'featured',
     img: 'img',
@@ -1181,6 +1183,7 @@ app.patch('/api/admin/products/:id', requireAdmin, asyncHandler(async (req, res)
       if (bodyKey === 'price') value = Number(value);
       if (bodyKey === 'oldPrice') value = value === '' || value === null ? null : Number(value);
       if (bodyKey === 'buyPrice') value = value === '' || value === null ? null : Number(value);
+      if (bodyKey === 'quantity') value = Math.max(0, Number(value) || 0);
       if (bodyKey === 'stock' || bodyKey === 'featured' || bodyKey === 'freeDelivery') value = value ? 1 : 0;
       setClauses.push(`${column} = ?`);
       params.push(value);
