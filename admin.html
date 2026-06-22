@@ -1361,67 +1361,78 @@ function viewOrder(id) {
   const s = sales.find(x => x.id === id);
   if (!s) return;
 
-  const statusMap = { pending:'info', confirmed:'info', packed:'orange', shipped:'orange', delivered:'success', cancelled:'danger' };
-  const payBadge = pm => pm === 'cash_on_delivery' ? 'Cash on Delivery (COD)' : pm === 'bank_transfer' ? 'Bank Transfer' : pm === 'card' ? 'Card Payment' : pm || '—';
-
   document.getElementById('modalOrderNo').textContent = s.orderNumber || '#' + s.id;
-  document.getElementById('modalOrderMeta').textContent = `Placed on ${fmtDate(s.createdAt)}`;
 
   const items = Array.isArray(s.items) ? s.items : [];
-  const itemsHtml = items.length
-    ? items.map((i,idx) => `<tr style="${idx%2===1?'background:rgba(255,255,255,0.02)':''}">
-        <td>${i.name}</td>
-        <td style="text-align:center;font-weight:600">${i.quantity || i.qty || 1}</td>
-        <td style="color:var(--text2)">Rs. ${Number(i.price||0).toLocaleString('en-US',{minimumFractionDigits:2})}</td>
-        <td style="color:var(--green);font-weight:600;text-align:right">Rs. ${Number(i.subtotal||0).toLocaleString('en-US',{minimumFractionDigits:2})}</td>
-      </tr>`).join('')
-    : `<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:16px">No item details.</td></tr>`;
 
-  // Delivery info from order
-  const delivery = s.delivery || {};
-  const deliveryHtml = `
-    <div class="delivery-card">
-      <h4><i class="fa-solid fa-location-dot" style="color:var(--red);margin-right:6px"></i>Delivery Information</h4>
-      <div class="delivery-rows">
-        <div class="dr"><span>Recipient Name</span><span>${delivery.name || s.deliveryName || s.customerName || '—'}</span></div>
-        <div class="dr"><span>Phone</span><span>${delivery.phone || s.deliveryPhone || s.customerPhone || '—'}</span></div>
-        <div class="dr"><span>District</span><span>${delivery.district || s.deliveryDistrict || '—'}</span></div>
-        <div class="dr"><span>Address</span><span>${delivery.address || s.deliveryAddress || '—'}</span></div>
-        ${(delivery.notes || s.deliveryNotes) ? `<div class="dr" style="grid-column:1/-1"><span>Notes</span><span>${delivery.notes || s.deliveryNotes}</span></div>` : ''}
-      </div>
-    </div>`;
+  const itemsHtml = items.length ? items.map(i => `
+    <tr>
+      <td style="padding:8px 12px">${i.name}</td>
+      <td style="padding:8px 12px;text-align:center">${i.quantity || i.qty || 1}</td>
+      <td style="padding:8px 12px;color:var(--green)">Rs. ${Number(i.price || 0).toFixed(2)}</td>
+      <td style="padding:8px 12px;color:var(--green);font-weight:600">Rs. ${Number(i.subtotal || 0).toFixed(2)}</td>
+    </tr>
+  `).join('') : `
+    <tr>
+      <td colspan="4" style="text-align:center;color:var(--text3);padding:12px">No item details.</td>
+    </tr>
+  `;
 
   document.getElementById('modalOrderBody').innerHTML = `
-    <div class="order-detail-grid">
-      <div class="detail-row"><span class="detail-label">Customer</span><span class="detail-val">${s.customerName || 'Guest'}</span></div>
-      <div class="detail-row"><span class="detail-label">Email</span><span class="detail-val">${s.customerEmail || '—'}</span></div>
-      <div class="detail-row"><span class="detail-label">Phone</span><span class="detail-val">${s.customerPhone || '—'}</span></div>
-      <div class="detail-row"><span class="detail-label">Payment Method</span><span class="detail-val">${payBadge(s.paymentMethod)}</span></div>
-      <div class="detail-row"><span class="detail-label">Payment Status</span><span class="detail-val"><span class="badge ${(s.paymentStatus||'pending')==='paid'?'success':'orange'}">${s.paymentStatus||'pending'}</span></span></div>
-      <div class="detail-row"><span class="detail-label">Order Status</span><span class="detail-val"><span class="badge ${statusMap[s.status]||'info'}">${s.status||'pending'}</span></span></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;font-size:13px">
+      <div><span style="color:var(--text2)">Customer:</span> <strong>${s.customerName || 'Guest'}</strong></div>
+      <div><span style="color:var(--text2)">Date:</span> ${fmtDate(s.createdAt)}</div>
+      <div><span style="color:var(--text2)">Payment:</span> ${s.paymentMethod || '—'}</div>
+      <div><span style="color:var(--text2)">Status:</span> ${s.status || '—'}</div>
+      <div><span style="color:var(--text2)">Phone:</span> ${s.deliveryPhone || s.customerPhone || '—'}</div>
+      <div><span style="color:var(--text2)">Email:</span> ${s.customerEmail || '—'}</div>
+
+      <div style="grid-column:1/-1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;margin-top:8px">
+        <div style="margin-bottom:8px">
+          <span style="color:var(--text2)">Delivery Name:</span>
+          <strong>${s.deliveryName || s.customerName || '—'}</strong>
+        </div>
+
+        <div style="margin-bottom:8px">
+          <span style="color:var(--text2)">Delivery Phone:</span>
+          <strong>${s.deliveryPhone || s.customerPhone || '—'}</strong>
+        </div>
+
+        <div style="margin-bottom:8px">
+          <span style="color:var(--text2)">Delivery District:</span>
+          <strong>${s.deliveryDistrict || '—'}</strong>
+        </div>
+
+        <div style="margin-bottom:8px">
+          <span style="color:var(--text2)">Delivery Address:</span><br>
+          <strong style="line-height:1.6">${s.deliveryAddress || '—'}</strong>
+        </div>
+
+        <div>
+          <span style="color:var(--text2)">Delivery Notes:</span><br>
+          <span style="line-height:1.6">${s.deliveryNotes || '—'}</span>
+        </div>
+      </div>
     </div>
-    ${deliveryHtml}
-    <table class="order-items-table">
-      <thead><tr><th>Product</th><th style="text-align:center">Qty</th><th>Unit Price</th><th style="text-align:right">Subtotal</th></tr></thead>
+
+    <table style="width:100%;border-collapse:collapse;background:var(--bg3);border-radius:8px;overflow:hidden;margin-bottom:16px">
+      <thead>
+        <tr style="background:var(--bg4)">
+          <th style="padding:8px 12px;font-size:12px;font-weight:600;color:var(--text2);text-align:left">Product</th>
+          <th style="padding:8px 12px;font-size:12px;font-weight:600;color:var(--text2);text-align:center">Qty</th>
+          <th style="padding:8px 12px;font-size:12px;font-weight:600;color:var(--text2)">Unit Price</th>
+          <th style="padding:8px 12px;font-size:12px;font-weight:600;color:var(--text2)">Subtotal</th>
+        </tr>
+      </thead>
       <tbody>${itemsHtml}</tbody>
     </table>
-    <div class="order-totals">
-      <div class="tot-row"><span class="tot-label">Subtotal:</span><span class="tot-val">Rs. ${Number(s.subtotal||s.total||0).toLocaleString('en-US',{minimumFractionDigits:2})}</span></div>
-      ${Number(s.discount||0)>0 ? `<div class="tot-row"><span class="tot-label">Discount:</span><span class="tot-val" style="color:var(--red)">- Rs. ${Number(s.discount).toLocaleString('en-US',{minimumFractionDigits:2})}</span></div>` : ''}
-      <div class="tot-row grand"><span class="tot-label">Total:</span><span class="tot-val">Rs. ${Number(s.total||0).toLocaleString('en-US',{minimumFractionDigits:2})}</span></div>
+
+    <div style="font-size:14px;display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+      <div>Subtotal: Rs. ${Number(s.subtotal || s.total || 0).toFixed(2)}</div>
+      <div>Discount: Rs. ${Number(s.discount || 0).toFixed(2)}</div>
+      <div style="font-size:17px;font-weight:700;color:var(--green)">Total: Rs. ${Number(s.total || 0).toFixed(2)}</div>
     </div>
-    <div class="status-update-bar">
-      <span style="font-size:13px;color:var(--text2);white-space:nowrap"><i class="fa-solid fa-pen-to-square" style="margin-right:4px"></i>Update Status:</span>
-      <select id="statusSelectModal" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:9px 14px;border-radius:8px;font-size:13px;flex:1;min-width:140px;cursor:pointer">
-        <option value="pending" ${s.status==='pending'?'selected':''}>Pending</option>
-        <option value="confirmed" ${s.status==='confirmed'?'selected':''}>Confirmed</option>
-        <option value="packed" ${s.status==='packed'?'selected':''}>Packed</option>
-        <option value="shipped" ${s.status==='shipped'?'selected':''}>Shipped</option>
-        <option value="delivered" ${s.status==='delivered'?'selected':''}>Delivered</option>
-        <option value="cancelled" ${s.status==='cancelled'?'selected':''}>Cancelled</option>
-      </select>
-      <button class="btn-primary" style="white-space:nowrap" onclick="updateOrderStatus(${s.id})"><i class="fa-solid fa-floppy-disk"></i> Save</button>
-    </div>`;
+  `;
 
   document.getElementById('orderModal').classList.add('open');
 }
