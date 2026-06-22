@@ -552,9 +552,7 @@ let authToken =
 
 /* Backend API URL */
 // Auto-detect: local dev uses same origin (localhost:3000), production uses Vercel URL
-const ADMIN_API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-  ? `http://${window.location.host}`
-  : 'https://thushan-motors.vercel.app';
+const ADMIN_API_BASE = 'https://thushan-motors.vercel.app';
 
 // ── Toast ──
 function toast(msg, type = 'success') {
@@ -1168,23 +1166,17 @@ function renderSalesTable() {
 function viewOrder(id) {
   const s = sales.find(x => x.id === id);
   if (!s) return;
-<<<<<<< HEAD
 
   document.getElementById('modalOrderNo').textContent = s.orderNumber || '#' + s.id;
 
   const items = Array.isArray(s.items) ? s.items : [];
 
-=======
-  document.getElementById('modalOrderNo').textContent = s.orderNumber || '#' + s.id;
-  const items = Array.isArray(s.items) ? s.items : [];
->>>>>>> 9d359cc391b09245e0a44548b282551eebc87f4c
   const itemsHtml = items.length ? items.map(i => `
     <tr>
-      <td style="padding:8px 12px">${i.name}</td>
+      <td style="padding:8px 12px">${i.name || 'Product'}</td>
       <td style="padding:8px 12px;text-align:center">${i.quantity || i.qty || 1}</td>
-<<<<<<< HEAD
       <td style="padding:8px 12px;color:var(--green)">Rs. ${Number(i.price || 0).toFixed(2)}</td>
-      <td style="padding:8px 12px;color:var(--green);font-weight:600">Rs. ${Number(i.subtotal || 0).toFixed(2)}</td>
+      <td style="padding:8px 12px;color:var(--green);font-weight:600">Rs. ${Number(i.subtotal || (Number(i.price || 0) * Number(i.quantity || i.qty || 1))).toFixed(2)}</td>
     </tr>
   `).join('') : `
     <tr>
@@ -1248,34 +1240,6 @@ function viewOrder(id) {
     </div>
   `;
 
-=======
-      <td style="padding:8px 12px;color:var(--green)">Rs. ${Number(i.price||0).toFixed(2)}</td>
-      <td style="padding:8px 12px;color:var(--green);font-weight:600">Rs. ${Number(i.subtotal||0).toFixed(2)}</td>
-    </tr>`).join('') : `<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:12px">No item details.</td></tr>`;
-  document.getElementById('modalOrderBody').innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;font-size:13px">
-      <div><span style="color:var(--text2)">Customer:</span> <strong>${s.customerName||'Guest'}</strong></div>
-      <div><span style="color:var(--text2)">Date:</span> ${fmtDate(s.createdAt)}</div>
-      <div><span style="color:var(--text2)">Payment:</span> ${s.paymentMethod||'—'}</div>
-      <div><span style="color:var(--text2)">Status:</span> ${s.status||'—'}</div>
-      <div><span style="color:var(--text2)">Phone:</span> ${s.customerPhone||'—'}</div>
-      <div><span style="color:var(--text2)">Email:</span> ${s.customerEmail||'—'}</div>
-    </div>
-    <table style="width:100%;border-collapse:collapse;background:var(--bg3);border-radius:8px;overflow:hidden;margin-bottom:16px">
-      <thead><tr style="background:var(--bg4)">
-        <th style="padding:8px 12px;font-size:12px;font-weight:600;color:var(--text2);text-align:left">Product</th>
-        <th style="padding:8px 12px;font-size:12px;font-weight:600;color:var(--text2);text-align:center">Qty</th>
-        <th style="padding:8px 12px;font-size:12px;font-weight:600;color:var(--text2)">Unit Price</th>
-        <th style="padding:8px 12px;font-size:12px;font-weight:600;color:var(--text2)">Subtotal</th>
-      </tr></thead>
-      <tbody>${itemsHtml}</tbody>
-    </table>
-    <div style="font-size:14px;display:flex;flex-direction:column;gap:6px;align-items:flex-end">
-      <div>Subtotal: Rs. ${Number(s.subtotal||s.total||0).toFixed(2)}</div>
-      <div>Discount: Rs. ${Number(s.discount||0).toFixed(2)}</div>
-      <div style="font-size:17px;font-weight:700;color:var(--green)">Total: Rs. ${Number(s.total||0).toFixed(2)}</div>
-    </div>`;
->>>>>>> 9d359cc391b09245e0a44548b282551eebc87f4c
   document.getElementById('orderModal').classList.add('open');
 }
 function closeOrderModal() { document.getElementById('orderModal').classList.remove('open'); }
