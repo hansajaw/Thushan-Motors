@@ -1398,7 +1398,13 @@ app.delete('/api/admin/suppliers/:id', requireAdmin, asyncHandler(async (req, re
   res.json({ message: 'Supplier deleted.' });
 }));
 
+// Only serve index.html for HTML page routes, not asset requests
 app.get('*', (req, res) => {
+  const p = req.path;
+  // If it looks like a static asset (has extension), return 404 instead of index.html
+  if (/\.[a-z0-9]{1,5}$/i.test(p)) {
+    return res.status(404).send('Not found');
+  }
   res.sendFile(path.join(FRONTEND_DIR, 'index.html'));
 });
 
