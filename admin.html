@@ -630,7 +630,10 @@ Monawada wenne kiyala step ekak ekak kiyanawa:
 // Only change this to a full URL (e.g. 'https://your-backend.com') if
 // you deliberately host the frontend files on a completely different
 // domain/service than the backend.
-const API_BASE = '';
+const API_BASE =
+  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:3000'
+    : 'https://thushan-motors.vercel.app';
 
 // Admin JWT eka localStorage eke save karana name eka. Me token eka
 // thamai /api/auth/login eken ena eka — ADMIN_KEY wage shared secret
