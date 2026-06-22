@@ -4,3 +4,6 @@ Backend/.env
 
 !.env.example
 !Backend/.env.example
+
+node_modules/
+Backend/node_modules/
