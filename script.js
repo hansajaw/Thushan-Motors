@@ -45,12 +45,12 @@ async function loadProductsFromServer() {
 
 /* ── MOTORCYCLE BRANDS ── */
 const brands = [
-  {name:'Honda', logo:'Images/Brands/honda.png'},
-  {name:'Yamaha', logo:'Images/Brands/yamaha.png'},
-  {name:'Bajaj', logo:'Images/Brands/bajaj.png'},
-  {name:'TVS', logo:'Images/Brands/tvs.png'},
-  {name:'Hero', logo:'Images/Brands/hero.png'},
-  {name:'Suzuki', logo:'Images/Brands/suzuki.png'}
+  {name:'Honda', logo:'images/brands/honda.png'},
+  {name:'Yamaha', logo:'images/brands/yamaha.png'},
+  {name:'Bajaj', logo:'images/brands/bajaj.png'},
+  {name:'TVS', logo:'images/brands/tvs.png'},
+  {name:'Hero', logo:'images/brands/hero.png'},
+  {name:'Suzuki', logo:'images/brands/suzuki.png'}
 ];
 
 /* ── SETTINGS ── */
@@ -311,9 +311,18 @@ function updateNavAuth(){
     if(nameEl){
       nameEl.textContent = (user.name || 'User').split(' ')[0];
     }
+
+    // Show Admin Panel button only for admin users
+    const adminBtn = $('adminPanelBtn');
+    if(adminBtn){
+      adminBtn.style.display = (user.role === 'admin') ? 'inline-flex' : 'none';
+    }
   }else{
     guest.classList.remove('hidden');
     userInfo.classList.add('hidden');
+
+    const adminBtn = $('adminPanelBtn');
+    if(adminBtn) adminBtn.style.display = 'none';
   }
 }
 

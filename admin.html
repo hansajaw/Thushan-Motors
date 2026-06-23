@@ -209,7 +209,7 @@ input:checked + .slider:before { transform: translateX(20px); }
 <div class="admin-container">
   <aside class="sidebar">
     <div class="sidebar-brand">
-      <img src="Images/Logo/tmLogo.png" alt="Thushan Motors Logo" class="tm-logo">
+      <img src="Images/Logo/tmLogo.png" alt="Thushan Motors" class="tm-logo">
       <div class="sidebar-brand-text">
         <h2>Thushan <span>Motors</span></h2>
         <p>Admin Panel</p>
@@ -227,7 +227,7 @@ input:checked + .slider:before { transform: translateX(20px); }
       <li id="li-messages"><a href="#" onclick="switchTab('messages');return false"><i class="fa-solid fa-envelope-open-text"></i> Messages</a></li>
     </ul>
     <div class="sidebar-footer">
-      <a href="/" target="_blank" class="btn-logout btn-visit"><i class="fa-solid fa-globe"></i> Visit Live Site</a>
+      <a href="index.html" target="_blank" class="btn-logout btn-visit"><i class="fa-solid fa-globe"></i> Visit Live Site</a>
       <button class="btn-logout" onclick="adminLogout()"><i class="fa-solid fa-power-off"></i> Logout</button>
     </div>
   </aside>
@@ -243,7 +243,7 @@ input:checked + .slider:before { transform: translateX(20px); }
           <p>Real-time overview of sales, revenue, and inventory.</p>
         </div>
         <div class="header-actions">
-          <a href="/" target="_blank" class="btn-secondary"><i class="fa-solid fa-globe"></i> Live Site</a>
+          <a href="index.html" target="_blank" class="btn-secondary"><i class="fa-solid fa-globe"></i> Live Site</a>
           <button class="btn-primary" onclick="syncAll()"><i class="fa-solid fa-rotate"></i> Sync Data</button>
         </div>
       </div>
@@ -354,10 +354,7 @@ input:checked + .slider:before { transform: translateX(20px); }
             <label class="toggle"><input type="checkbox" id="pf-featured"><span class="slider"></span></label>
             <span class="toggle-label">Featured</span>
           </div>
-          <div class="toggle-wrap" style="margin-left:24px">
-            <label class="toggle"><input type="checkbox" id="pf-free-delivery"><span class="slider"></span></label>
-            <span class="toggle-label">Free Delivery</span>
-          </div>
+
         </div>
         <input type="hidden" id="pf-edit-id">
         <input type="hidden" id="pf-img-base64">
@@ -448,7 +445,6 @@ input:checked + .slider:before { transform: translateX(20px); }
         <div class="form-grid">
           <div class="form-group"><label>Full Name *</label><input type="text" id="uf-name" required></div>
           <div class="form-group"><label>Email *</label><input type="email" id="uf-email" required></div>
-          <div class="form-group"><label>Password *</label><input type="password" id="uf-password" required></div>
           <div class="form-group"><label>Role</label>
             <select id="uf-role"><option value="admin">Admin</option><option value="customer">Customer</option></select>
           </div>
@@ -710,7 +706,7 @@ function closeSidebar() { document.querySelector('.sidebar').classList.remove('m
 // ── Sync all data ──
 async function syncAll() {
   try {
-    const [p, s, c, u, sl, m] = await Promise.all([
+    const [p, sa, c, u, sl, m] = await Promise.all([
       api('/api/products').catch(() => []),
       api('/api/admin/sales').catch(() => []),
       api('/api/admin/customers').catch(() => []),
@@ -718,12 +714,12 @@ async function syncAll() {
       api('/api/admin/suppliers').catch(() => []),
       api('/api/admin/messages').catch(() => [])
     ]);
-    products = Array.isArray(p) ? p : [];
-    sales = Array.isArray(s) ? s : [];
-    customers = Array.isArray(c) ? c : [];
-    users = Array.isArray(u) ? u : [];
+    products  = Array.isArray(p)  ? p  : [];
+    sales     = Array.isArray(sa) ? sa : [];
+    customers = Array.isArray(c)  ? c  : [];
+    users     = Array.isArray(u)  ? u  : [];
     suppliers = Array.isArray(sl) ? sl : [];
-    messages = Array.isArray(m) ? m : [];
+    messages  = Array.isArray(m)  ? m  : [];
     renderAll();
     toast('Data synced.', 'success');
   } catch(e) {
@@ -775,10 +771,10 @@ function renderDashboard() {
 // ── POS ──
 function fillPosCustomers() {
   const sel = document.getElementById('pos-customer');
-  sel.innerHTML = '<option value="Walk-In">Walk-In Customer</option>';
+  sel.innerHTML = '<option value="walk-in">Walk-In Customer</option>';
   customers.forEach(c => {
     const opt = document.createElement('option');
-    opt.value = c.name;
+    opt.value = c.id;          // use numeric ID so /api/admin/orders gets customerId
     opt.textContent = `${c.name} (${c.phone || c.email || ''})`;
     sel.appendChild(opt);
   });
@@ -846,29 +842,42 @@ function removeFromCart(idx) { posCart.splice(idx, 1); updateCartTotals(); }
 
 async function checkoutPOS() {
   if (!posCart.length) { toast('Cart is empty.', 'danger'); return; }
-  let sub = posCart.reduce((s, i) => s + Number(i.price) * i.qty, 0);
-  const disc = parseFloat(document.getElementById('pos-discount').value) || 0;
-  const discAmt = sub * disc / 100;
-  const grand = sub - discAmt;
-  const custName = document.getElementById('pos-customer').value;
 
-  // Build order payload for existing user or walk-in
-  // For POS we POST to /api/admin/sales directly
+  const disc = parseFloat(document.getElementById('pos-discount').value) || 0;
+  const custVal = document.getElementById('pos-customer').value;
+
+  let customerId = null;
+
+  if (custVal === 'walk-in') {
+    // Auto-create a walk-in customer record so /api/admin/orders gets a valid user_id
+    try {
+      const walkin = await api('/api/admin/customers', {
+        method: 'POST',
+        body: JSON.stringify({ name: 'Walk-In Customer' })
+      });
+      customerId = walkin.id;
+    } catch(e) {
+      toast('Could not create walk-in customer: ' + e.message, 'danger');
+      return;
+    }
+  } else {
+    customerId = Number(custVal);
+    if (!customerId) { toast('Please select a customer.', 'danger'); return; }
+  }
+
   const payload = {
-    customerName: custName,
-    itemsCount: posCart.reduce((s, i) => s + i.qty, 0),
-    total: grand,
-    subtotal: sub,
-    discount: discAmt,
-    date: new Date().toISOString(),
-    items: posCart.map(i => ({ productId: i.id, name: i.name, price: i.price, quantity: i.qty, subtotal: Number(i.price)*i.qty }))
+    customerId,
+    discount: disc,
+    paymentMethod: 'cash_on_delivery',
+    items: posCart.map(i => ({ productId: i.id, quantity: i.qty }))
   };
 
   try {
-    await api('/api/admin/sales', { method: 'POST', body: JSON.stringify(payload) });
-    toast('Invoice saved!', 'success');
+    await api('/api/admin/orders', { method: 'POST', body: JSON.stringify(payload) });
+    toast('Invoice saved successfully!', 'success');
   } catch(e) {
-    toast('Saved locally (offline mode).', 'info');
+    toast('Checkout failed: ' + (e.message || 'Unknown error'), 'danger');
+    return;
   }
 
   posCart = [];
@@ -931,7 +940,6 @@ function openProductForm(p = null) {
   document.getElementById('pf-img-url').value = p ? (p.img || '') : '';
   document.getElementById('pf-stock').checked = p ? p.stock : true;
   document.getElementById('pf-featured').checked = p ? p.featured : false;
-  document.getElementById('pf-free-delivery').checked = p ? p.freeDelivery : false;
   document.getElementById('pf-img-base64').value = '';
   document.getElementById('pf-img-preview-box').style.display = 'none';
   if (p && p.img) {
@@ -982,7 +990,7 @@ async function saveProduct() {
     img: imgB64 || imgUrl || '',
     stock: document.getElementById('pf-stock').checked,
     featured: document.getElementById('pf-featured').checked,
-    freeDelivery: document.getElementById('pf-free-delivery').checked
+    freeDelivery: false
   };
 
   try {
@@ -1083,12 +1091,12 @@ function renderCustomersTable() {
   if (!filtered.length) { tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text3)">No customers found.</td></tr>`; return; }
   filtered.forEach((c, i) => {
     tbody.innerHTML += `<tr>
-      <td><strong>#${c.id || i+1}</strong></td>
+      <td><strong>#${i+1}</strong></td>
       <td>${c.name}</td>
       <td>${c.phone || '—'}</td>
       <td>${c.email || '—'}</td>
       <td>${fmtDate(c.createdAt)}</td>
-      <td><button class="btn-icon delete" title="Delete" onclick="deleteUser(${c.id})"><i class="fa-solid fa-user-xmark"></i></button></td>
+      <td><button class="btn-icon delete" title="Delete" onclick="deleteCustomer(${c.id})"><i class="fa-solid fa-user-xmark"></i></button></td>
     </tr>`;
   });
 }
@@ -1102,7 +1110,7 @@ function renderUsersTable() {
     const roleBadge = u.role === 'admin' ? `<span class="badge purple">Admin</span>` : `<span class="badge info">Customer</span>`;
     const verBadge = u.emailVerified ? `<span class="badge success">Yes</span>` : `<span class="badge danger">No</span>`;
     tbody.innerHTML += `<tr>
-      <td><strong>#${u.id || i+1}</strong></td>
+      <td><strong>#${i+1}</strong></td>
       <td>${u.name}</td>
       <td>${u.email}</td>
       <td>${roleBadge}</td>
@@ -1115,30 +1123,39 @@ function renderUsersTable() {
 function openUserForm() { document.getElementById('user-form-card').style.display = 'block'; }
 function closeUserForm() { document.getElementById('user-form-card').style.display = 'none'; }
 async function saveUser() {
+  const autoPass = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-4).toUpperCase() + '1!';
   const payload = {
     name: document.getElementById('uf-name').value.trim(),
     email: document.getElementById('uf-email').value.trim(),
-    password: document.getElementById('uf-password').value,
+    password: autoPass,
     role: document.getElementById('uf-role').value
   };
-  if (!payload.name || !payload.email || !payload.password) { toast('All fields required.', 'danger'); return; }
+  if (!payload.name || !payload.email) { toast('Name and email are required.', 'danger'); return; }
   try {
     await api('/api/admin/users', { method: 'POST', body: JSON.stringify(payload) });
-    toast('User created!', 'success');
+    toast('User created! Temp password: ' + autoPass, 'info');
     closeUserForm();
     users = await api('/api/admin/users').catch(() => users);
     renderUsersTable();
   } catch(e) { toast('Error: ' + e.message, 'danger'); }
 }
 async function deleteUser(id) {
-  if (!confirm('Delete this user?')) return;
+  if (!confirm('Delete this system user?')) return;
   try {
     await api(`/api/admin/users/${id}`, { method: 'DELETE' });
     users = users.filter(u => u.id !== id);
-    customers = customers.filter(c => c.id !== id);
     renderUsersTable();
-    renderCustomersTable();
     toast('User deleted.', 'success');
+  } catch(e) { toast('Error: ' + e.message, 'danger'); }
+}
+
+async function deleteCustomer(id) {
+  if (!confirm('Delete this customer?')) return;
+  try {
+    await api(`/api/admin/users/${id}`, { method: 'DELETE' });
+    customers = customers.filter(c => c.id !== id);
+    renderCustomersTable();
+    toast('Customer deleted.', 'success');
   } catch(e) { toast('Error: ' + e.message, 'danger'); }
 }
 
