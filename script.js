@@ -9,10 +9,14 @@
    ALWAYS on the same origin — this should stay '' (empty) unless you
    deliberately host the frontend on a different domain than the backend.
 ── */
-const API_BASE =
-  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:3000'
-    : 'https://thushan-motors.vercel.app';
+const API_BASE = (function(){
+  const h = window.location.hostname;
+  if (h === 'localhost' || h === '127.0.0.1') return 'http://localhost:3000';
+  // Same-origin: backend and frontend on the same server/domain
+  if (h === 'thushanmotors.lk' || h === 'www.thushanmotors.lk') return '';
+  // Vercel frontend talking to Vercel backend
+  return 'https://thushan-motors.vercel.app';
+}());
 
 const GOOGLE_CLIENT_ID = '727542561981-cc0ivqbgb2f27hqk8h04h7tjrc2js1vr.apps.googleusercontent.com'; 
 
@@ -1252,7 +1256,46 @@ async function confirmOrder(){
       payment: paymentData
     };
 
-    const order = createLocalOrder(orderPayload);
+    // ── Send order to backend DB (so admin panel receives it) ──
+    let order;
+    const token = localStorage.getItem('thushanUserToken');
+    if (token) {
+      const apiRes = await fetch(API_BASE + '/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify(orderPayload)
+      });
+      if (!apiRes.ok) {
+        const errData = await apiRes.json().catch(() => ({}));
+        throw new Error(errData.message || 'Could not place order. Please try again.');
+      }
+      const apiOrder = await apiRes.json();
+      // Normalise API response shape to match local order shape
+      order = {
+        id: apiOrder.id,
+        orderNo: apiOrder.orderNo || apiOrder.orderNumber || ('TM-' + String(apiOrder.id).padStart(5, '0')),
+        customer: apiOrder.customer || getCurrentUser(),
+        items: (apiOrder.items || orderPayload.items || []).map(function(i){
+          return { productId: i.productId, name: i.name, price: Number(i.price), quantity: Number(i.quantity || i.qty || 1), subtotal: Number(i.subtotal || 0) };
+        }),
+        subtotal: Number(apiOrder.subtotal || subtotal),
+        deliveryCharge: Number(orderPayload.deliveryCharge || 0),
+        total: Number(apiOrder.total || total),
+        delivery: orderPayload.delivery || {},
+        paymentMethod: normalizePaymentMethod(orderPayload.paymentMethod),
+        payment: orderPayload.payment || {},
+        status: apiOrder.status || 'pending',
+        createdAt: apiOrder.createdAt || new Date().toISOString()
+      };
+      // Also keep a local copy so orders.html works offline / immediately
+      createLocalOrder(orderPayload, order.orderNo, order.id, order.createdAt, order.status);
+    } else {
+      // Fallback for guests (no auth token) — local only
+      order = createLocalOrder(orderPayload);
+    }
 
     saveDeliveryDetails(details);
     closeCheckoutModal();
@@ -1269,18 +1312,23 @@ async function confirmOrder(){
   }
 }
 
-function createLocalOrder(orderPayload){
+// serverOrderNo / serverId / serverCreatedAt / serverStatus — optionally passed
+// in when the backend already gave us the canonical values (so local copy matches DB).
+function createLocalOrder(orderPayload, serverOrderNo, serverId, serverCreatedAt, serverStatus){
   const orders = JSON.parse(localStorage.getItem('tm_orders') || '[]');
-  const orderId = orders.length + 1;
   const user = getCurrentUser();
 
   const subtotal = Number(orderPayload.subtotal || 0);
   const deliveryCharge = Number(orderPayload.deliveryCharge || FIXED_DELIVERY_CHARGE);
   const total = subtotal + deliveryCharge;
 
+  // Use server-provided values when available so the local receipt matches the DB order.
+  const orderId = serverId || (orders.length + 1);
+  const orderNo = serverOrderNo || ('TM-' + String(orderId).padStart(5, '0'));
+
   const order = {
     id: orderId,
-    orderNo: 'TM-' + String(orderId).padStart(5, '0'),
+    orderNo: orderNo,
     customer: user || null,
     items: orderPayload.items || [],
     subtotal: subtotal,
@@ -1289,8 +1337,8 @@ function createLocalOrder(orderPayload){
     delivery: orderPayload.delivery || {},
     paymentMethod: normalizePaymentMethod(orderPayload.paymentMethod),
     payment: orderPayload.payment || {},
-    status: 'pending',
-    createdAt: new Date().toISOString()
+    status: serverStatus || 'pending',
+    createdAt: serverCreatedAt || new Date().toISOString()
   };
 
   orders.push(order);
@@ -2067,7 +2115,7 @@ function calculateOrderSubtotal(items){
   }, 0);
 }
 
-function renderOrdersPage(){
+async function renderOrdersPage(){
   const ordersList = $('ordersList');
 
   if(!ordersList){
@@ -2090,15 +2138,57 @@ function renderOrdersPage(){
     return;
   }
 
-  let orders = getStoredOrders();
+  // Show loading state while fetching from backend
+  ordersList.innerHTML = '<div class="orders-empty"><i class="fa-solid fa-spinner fa-spin" style="font-size:2rem;color:var(--red)"></i><p style="margin-top:14px;color:var(--muted)">Loading your orders…</p></div>';
 
-  orders = orders.filter(function(order){
-    if(!order.customer || !order.customer.email){
-      return true;
+  // ── Fetch live orders from backend so admin status updates are visible ──
+  let orders = [];
+  const token = localStorage.getItem('thushanUserToken');
+  if (token) {
+    try {
+      const res = await fetch(API_BASE + '/api/orders/my', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (res.ok) {
+        const apiOrders = await res.json();
+        orders = (Array.isArray(apiOrders) ? apiOrders : []).map(function(o){
+          return {
+            id: o.id,
+            orderNo: o.orderNo || o.orderNumber || ('TM-' + String(o.id).padStart(5,'0')),
+            customer: o.customer || user,
+            items: (o.items || []).map(function(i){
+              return { productId: i.productId, name: i.name, price: Number(i.price), quantity: Number(i.quantity || i.qty || 1), subtotal: Number(i.subtotal || 0) };
+            }),
+            subtotal: Number(o.subtotal || o.total || 0),
+            deliveryCharge: Number(o.deliveryCharge || 0),
+            total: Number(o.total || 0),
+            delivery: {
+              name: o.deliveryName || (o.delivery && o.delivery.name) || '',
+              phone: o.deliveryPhone || (o.delivery && o.delivery.phone) || '',
+              address: o.deliveryAddress || (o.delivery && o.delivery.address) || '',
+              district: o.deliveryDistrict || (o.delivery && o.delivery.district) || '',
+              notes: o.deliveryNotes || (o.delivery && o.delivery.notes) || ''
+            },
+            paymentMethod: normalizePaymentMethod(o.paymentMethod),
+            payment: o.payment || {},
+            status: o.status || 'pending',
+            createdAt: o.createdAt || new Date().toISOString()
+          };
+        });
+      }
+    } catch(e) {
+      // Network error – fall through to localStorage fallback
+      orders = [];
     }
+  }
 
-    return order.customer.email === user.email;
-  });
+  // Fallback: use localStorage (covers guests / offline)
+  if (!orders.length) {
+    orders = getStoredOrders().filter(function(order){
+      if(!order.customer || !order.customer.email){ return true; }
+      return order.customer.email === user.email;
+    });
+  }
 
   if(orders.length === 0){
     ordersList.innerHTML =

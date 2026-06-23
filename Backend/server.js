@@ -1246,6 +1246,11 @@ app.get('/api/admin/sales', requireAdmin, asyncHandler(async (req, res) => {
       total: Number(o.total),
       paymentMethod: o.payment_method,
       paymentStatus: o.payment_status,
+      deliveryName: o.delivery_name || '',
+      deliveryPhone: o.delivery_phone || '',
+      deliveryAddress: o.delivery_address || '',
+      deliveryDistrict: o.delivery_district || '',
+      deliveryNotes: o.delivery_notes || '',
       createdAt: o.created_at,
       itemsCount: totalQty,
       items: orderItems

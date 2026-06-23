@@ -553,9 +553,12 @@ let authToken =
 
 /* Backend API URL */
 // Auto-detect: local dev uses same origin (localhost:3000), production uses Vercel URL
-const ADMIN_API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-  ? `http://${window.location.host}`
-  : 'https://thushan-motors.vercel.app';
+const ADMIN_API_BASE = (function(){
+  const h = window.location.hostname;
+  if (h === 'localhost' || h === '127.0.0.1') return `http://${window.location.host}`;
+  if (h === 'thushanmotors.lk' || h === 'www.thushanmotors.lk') return '';
+  return 'https://thushan-motors.vercel.app';
+}());
 
 // ── Toast ──
 function toast(msg, type = 'success') {
@@ -1208,9 +1211,13 @@ function renderSalesTable() {
   });
 }
 
+// Currently-open order id — needed by updateOrderStatus()
+let _currentOrderId = null;
+
 function viewOrder(id) {
   const s = sales.find(x => x.id === id);
   if (!s) return;
+  _currentOrderId = id;
   document.getElementById('modalOrderNo').textContent = s.orderNumber || '#' + s.id;
   const items = Array.isArray(s.items) ? s.items : [];
   const itemsHtml = items.length ? items.map(i => `
@@ -1220,14 +1227,20 @@ function viewOrder(id) {
       <td style="padding:8px 12px;color:var(--green)">Rs. ${Number(i.price||0).toFixed(2)}</td>
       <td style="padding:8px 12px;color:var(--green);font-weight:600">Rs. ${Number(i.subtotal||0).toFixed(2)}</td>
     </tr>`).join('') : `<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:12px">No item details.</td></tr>`;
+
+  const statusMap = { pending:'info', confirmed:'info', packed:'orange', shipped:'orange', delivered:'success', cancelled:'danger' };
+  const statusOptions = ['pending','confirmed','packed','shipped','delivered','cancelled'];
+
   document.getElementById('modalOrderBody').innerHTML = `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;font-size:13px">
       <div><span style="color:var(--text2)">Customer:</span> <strong>${s.customerName||'Guest'}</strong></div>
       <div><span style="color:var(--text2)">Date:</span> ${fmtDate(s.createdAt)}</div>
       <div><span style="color:var(--text2)">Payment:</span> ${s.paymentMethod||'—'}</div>
-      <div><span style="color:var(--text2)">Status:</span> ${s.status||'—'}</div>
+      <div><span style="color:var(--text2)">Pay Status:</span> ${s.paymentStatus||'—'}</div>
       <div><span style="color:var(--text2)">Phone:</span> ${s.customerPhone||'—'}</div>
       <div><span style="color:var(--text2)">Email:</span> ${s.customerEmail||'—'}</div>
+      ${s.deliveryAddress ? `<div style="grid-column:1/-1"><span style="color:var(--text2)">Address:</span> ${s.deliveryAddress}${s.deliveryDistrict ? ', ' + s.deliveryDistrict : ''}</div>` : ''}
+      ${s.deliveryNotes ? `<div style="grid-column:1/-1"><span style="color:var(--text2)">Notes:</span> ${s.deliveryNotes}</div>` : ''}
     </div>
     <table style="width:100%;border-collapse:collapse;background:var(--bg3);border-radius:8px;overflow:hidden;margin-bottom:16px">
       <thead><tr style="background:var(--bg4)">
@@ -1238,14 +1251,64 @@ function viewOrder(id) {
       </tr></thead>
       <tbody>${itemsHtml}</tbody>
     </table>
-    <div style="font-size:14px;display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+    <div style="font-size:14px;display:flex;flex-direction:column;gap:6px;align-items:flex-end;margin-bottom:20px">
       <div>Subtotal: Rs. ${Number(s.subtotal||s.total||0).toFixed(2)}</div>
       <div>Discount: Rs. ${Number(s.discount||0).toFixed(2)}</div>
       <div style="font-size:17px;font-weight:700;color:var(--green)">Total: Rs. ${Number(s.total||0).toFixed(2)}</div>
+    </div>
+    <div style="border-top:1px solid var(--border);padding-top:18px">
+      <h4 style="font-size:13px;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">Update Order Status</h4>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <select id="statusUpdateSelect" style="flex:1;min-width:160px;background:var(--bg3);border:1px solid var(--border);padding:10px 12px;border-radius:8px;color:var(--text);font-size:13.5px">
+          ${statusOptions.map(st => `<option value="${st}" ${st === (s.status||'pending') ? 'selected' : ''}>${st.charAt(0).toUpperCase()+st.slice(1)}</option>`).join('')}
+        </select>
+        <button class="btn-primary" id="statusUpdateBtn" onclick="updateOrderStatus()">
+          <i class="fa-solid fa-floppy-disk"></i> Save Status
+        </button>
+      </div>
+      <p id="statusUpdateMsg" style="font-size:12px;margin-top:8px;color:var(--green);display:none"></p>
     </div>`;
   document.getElementById('orderModal').classList.add('open');
 }
-function closeOrderModal() { document.getElementById('orderModal').classList.remove('open'); }
+
+async function updateOrderStatus() {
+  if (!_currentOrderId) return;
+  const select = document.getElementById('statusUpdateSelect');
+  const btn = document.getElementById('statusUpdateBtn');
+  const msg = document.getElementById('statusUpdateMsg');
+  if (!select) return;
+  const newStatus = select.value;
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving…';
+  msg.style.display = 'none';
+  try {
+    const updated = await api(`/api/admin/orders/${_currentOrderId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: newStatus })
+    });
+    // Update in-memory sales array so table re-renders correctly
+    const idx = sales.findIndex(x => x.id === _currentOrderId);
+    if (idx !== -1) {
+      sales[idx].status = updated.status || newStatus;
+    }
+    renderSalesTable();
+    renderDashboard();
+    msg.textContent = '✓ Status updated to: ' + newStatus;
+    msg.style.color = 'var(--green)';
+    msg.style.display = 'block';
+    toast('Order status updated to ' + newStatus, 'success');
+  } catch(e) {
+    msg.textContent = '✗ Failed: ' + (e.message || 'Server error');
+    msg.style.color = 'var(--red)';
+    msg.style.display = 'block';
+    toast('Status update failed: ' + (e.message || 'error'), 'danger');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save Status';
+  }
+}
+
+function closeOrderModal() { document.getElementById('orderModal').classList.remove('open'); _currentOrderId = null; }
 
 // ── Reports ──
 async function loadReports() {
