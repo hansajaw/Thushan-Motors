@@ -10,10 +10,10 @@ function hashPassword(password) {
 
 function verifyPassword(password, stored) {
   if (!stored || !stored.includes(':')) return false;
-  const [salt, expected] = stored.split(':');
-  const actual = crypto.createHmac('sha256', salt).update(String(password)).digest('hex');
+  const [salt, hash] = stored.split(':');
+  const attempt = crypto.createHmac('sha256', salt).update(String(password)).digest('hex');
   try {
-    return crypto.timingSafeEqual(Buffer.from(actual, 'hex'), Buffer.from(expected, 'hex'));
+    return crypto.timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(attempt, 'hex'));
   } catch {
     return false;
   }
