@@ -21,16 +21,16 @@
       </p>
 
       <div class="foot-socials">
-        <a href="#" class="foot-social" title="Facebook">
+        <a href="https://www.facebook.com/share/1Bm116LRkQ/?mibextid=wwXIfr" class="foot-social" title="Facebook">
           <i class="fa-brands fa-facebook-f"></i>
         </a>
 
-        <a href="#" class="foot-social" title="WhatsApp">
+        <a href="https://wa.me/94715755349" class="foot-social" title="WhatsApp">
           <i class="fa-brands fa-whatsapp"></i>
         </a>
 
-        <a href="#" class="foot-social" title="TikTok">
-          <i class="fa-brands fa-tiktok"></i>
+        <a href="https://m.me/thushanmotorspanadura" class="foot-social" title="Messenger">
+          <i class="fa-brands fa-facebook-messenger"></i>
         </a>
       </div>
     </div>
@@ -74,8 +74,8 @@
         </li>
 
         <li>
-          <a href="mailto:info@thushanmotors.lk">
-            <i class="fa-solid fa-envelope"></i> info@thushanmotors.lk
+          <a href="mailto:thushanmotorspanadura@gmail.com">
+            <i class="fa-solid fa-envelope"></i> thushanmotorspanadura@gmail.com
           </a>
         </li>
 

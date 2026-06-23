@@ -23,12 +23,13 @@
       <div class="hero-searchbar">
         <i class="fa-solid fa-magnifying-glass"></i>
         <input type="text" id="heroSearch" placeholder="Search brake pads, tyres, chains..." onkeydown="if(event.key==='Enter') doHeroSearch()">
-        <button onclick="doHeroSearch()">Search Parts &rarr;</button>
+        <button onclick="doHeroSearch()">Search Parts</button>
       </div>
       <div class="hero-btns">
         <button class="btn-a btn-primary-hero" onclick="location.href='shop.html'"><i class="fa-solid fa-shop"></i> Shop Now</button>
         <button class="btn-a btn-outline-hero" onclick="location.href='contact.html'"><i class="fa-solid fa-truck"></i> Track / Ask Order</button>
-        <button class="btn-a btn-whatsapp" onclick="location.href='contact.html'"><i class="fab fa-whatsapp"></i> WhatsApp</button>
+        <button class="btn-a btn-whatsapp" onclick="window.open('https://wa.me/94715755349', '_blank')"><i class="fa-brands fa-whatsapp"></i> WhatsApp
+</button>
       </div>
       <div class="hero-badges">
         <div class="hero-badge"><i class="fa-solid fa-store"></i><div><strong>Local Shop</strong><span>Based in Panadura</span></div></div>
@@ -48,7 +49,7 @@
   <section style="background:var(--bg2);border-bottom:1px solid var(--border)">
     <div class="sec-header-row sec-header">
       <div><div class="eyebrow">Browse by</div><h2>Shop by <span>Category</span></h2><p>Select a category and view matching spare parts.</p></div>
-      <a href="shop.html" class="sec-link">View All Products &rarr;</a>
+      <a href="shop.html" class="sec-link">View All Products</a>
     </div>
     <div class="category-grid">
       <div class="category-card" onclick="openCategory('engine')"><div class="cat-icon"><i class="fa-solid fa-gears"></i></div><div><h3>Engine Parts</h3><p>Brake pads, engine oil, exhaust, carburetor and more.</p></div></div>
@@ -177,7 +178,7 @@
       <h2>Shop by <span>Brand</span></h2>
       <p>Select your motorcycle brand and view matching spare parts.</p>
     </div>
-    <a href="shop.html" class="sec-link">View All Products &rarr;</a>
+    <a href="shop.html" class="sec-link">View All Products</a>
   </div>
 
   <div class="brand-grid">
