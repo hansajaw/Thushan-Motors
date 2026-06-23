@@ -597,7 +597,9 @@ input:checked + .slider:before { transform: translateX(20px); }
 let products = [], suppliers = [], customers = [], users = [], sales = [], messages = [];
 let posCart = [];
 let authToken = localStorage.getItem('tm_auth_token') || '';
-const BASE = window.location.origin;
+
+/* Backend API URL */
+const ADMIN_API_BASE = 'https://thushan-motors.vercel.app';
 
 // ── Toast ──
 function toast(msg, type = 'success') {
