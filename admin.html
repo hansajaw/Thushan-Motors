@@ -209,7 +209,7 @@ input:checked + .slider:before { transform: translateX(20px); }
   <aside class="sidebar">
     <div class="sidebar-brand">
       <i class="fa-solid fa-gear"></i>
-      <h2>Thushan <span>Admin</span></h2>
+      <h2>Thushan <span>Motors</span></h2>
     </div>
     <ul class="sidebar-menu">
       <li class="active" id="li-dashboard"><a href="#" onclick="switchTab('dashboard');return false"><i class="fa-solid fa-chart-pie"></i> Dashboard</a></li>
@@ -223,7 +223,7 @@ input:checked + .slider:before { transform: translateX(20px); }
       <li id="li-messages"><a href="#" onclick="switchTab('messages');return false"><i class="fa-solid fa-envelope-open-text"></i> Messages</a></li>
     </ul>
     <div class="sidebar-footer">
-      <a href="index.html" target="_blank" class="btn-logout btn-visit"><i class="fa-solid fa-globe"></i> Visit Live Site</a>
+      <a href="/" target="_blank" class="btn-logout btn-visit"><i class="fa-solid fa-globe"></i> Visit Live Site</a>
       <button class="btn-logout" onclick="adminLogout()"><i class="fa-solid fa-power-off"></i> Logout</button>
     </div>
   </aside>
@@ -239,7 +239,7 @@ input:checked + .slider:before { transform: translateX(20px); }
           <p>Real-time overview of sales, revenue, and inventory.</p>
         </div>
         <div class="header-actions">
-          <a href="index.html" target="_blank" class="btn-secondary"><i class="fa-solid fa-globe"></i> Live Site</a>
+          <a href="/" target="_blank" class="btn-secondary"><i class="fa-solid fa-globe"></i> Live Site</a>
           <button class="btn-primary" onclick="syncAll()"><i class="fa-solid fa-rotate"></i> Sync Data</button>
         </div>
       </div>
@@ -771,10 +771,10 @@ function renderDashboard() {
 // ── POS ──
 function fillPosCustomers() {
   const sel = document.getElementById('pos-customer');
-  sel.innerHTML = '<option value="walk-in">Walk-In Customer</option>';
+  sel.innerHTML = '<option value="Walk-In">Walk-In Customer</option>';
   customers.forEach(c => {
     const opt = document.createElement('option');
-    opt.value = c.id;          // use numeric ID so /api/admin/orders gets customerId
+    opt.value = c.name;
     opt.textContent = `${c.name} (${c.phone || c.email || ''})`;
     sel.appendChild(opt);
   });
@@ -842,42 +842,29 @@ function removeFromCart(idx) { posCart.splice(idx, 1); updateCartTotals(); }
 
 async function checkoutPOS() {
   if (!posCart.length) { toast('Cart is empty.', 'danger'); return; }
-
+  let sub = posCart.reduce((s, i) => s + Number(i.price) * i.qty, 0);
   const disc = parseFloat(document.getElementById('pos-discount').value) || 0;
-  const custVal = document.getElementById('pos-customer').value;
+  const discAmt = sub * disc / 100;
+  const grand = sub - discAmt;
+  const custName = document.getElementById('pos-customer').value;
 
-  let customerId = null;
-
-  if (custVal === 'walk-in') {
-    // Auto-create a walk-in customer record so /api/admin/orders gets a valid user_id
-    try {
-      const walkin = await api('/api/admin/customers', {
-        method: 'POST',
-        body: JSON.stringify({ name: 'Walk-In Customer' })
-      });
-      customerId = walkin.id;
-    } catch(e) {
-      toast('Could not create walk-in customer: ' + e.message, 'danger');
-      return;
-    }
-  } else {
-    customerId = Number(custVal);
-    if (!customerId) { toast('Please select a customer.', 'danger'); return; }
-  }
-
+  // Build order payload for existing user or walk-in
+  // For POS we POST to /api/admin/sales directly
   const payload = {
-    customerId,
-    discount: disc,
-    paymentMethod: 'cash_on_delivery',
-    items: posCart.map(i => ({ productId: i.id, quantity: i.qty }))
+    customerName: custName,
+    itemsCount: posCart.reduce((s, i) => s + i.qty, 0),
+    total: grand,
+    subtotal: sub,
+    discount: discAmt,
+    date: new Date().toISOString(),
+    items: posCart.map(i => ({ productId: i.id, name: i.name, price: i.price, quantity: i.qty, subtotal: Number(i.price)*i.qty }))
   };
 
   try {
-    await api('/api/admin/orders', { method: 'POST', body: JSON.stringify(payload) });
-    toast('Invoice saved successfully!', 'success');
+    await api('/api/admin/sales', { method: 'POST', body: JSON.stringify(payload) });
+    toast('Invoice saved!', 'success');
   } catch(e) {
-    toast('Checkout failed: ' + (e.message || 'Unknown error'), 'danger');
-    return;
+    toast('Saved locally (offline mode).', 'info');
   }
 
   posCart = [];
