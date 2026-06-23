@@ -74,8 +74,8 @@
         </li>
 
         <li>
-          <a href="mailto:info@thushanmotors.lk">
-            <i class="fa-solid fa-envelope"></i> info@thushanmotors.lk
+          <a href="mailto:thushanmotorspanadura@gmail.com">
+            <i class="fa-solid fa-envelope"></i> thushanmotorspanadura@gmail.com
           </a>
         </li>
 
