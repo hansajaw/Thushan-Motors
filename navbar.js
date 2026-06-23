@@ -4,6 +4,58 @@
 ══════════════════════════════════════ */
 
 (function(){
+  function setMobileMenuState(open){
+    const navLinks = document.getElementById('navLinks');
+    const menuBtn = document.getElementById('mobileMenuToggle');
+
+    if(!navLinks || !menuBtn) return;
+
+    navLinks.classList.toggle('mobile-open', open);
+    menuBtn.classList.toggle('active', open);
+    menuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    menuBtn.setAttribute('aria-label', open ? 'Close navigation menu' : 'Open navigation menu');
+
+    const icon = menuBtn.querySelector('i');
+    if(icon){
+      icon.className = open ? 'fa-solid fa-xmark' : 'fa-solid fa-bars';
+    }
+  }
+
+  window.toggleMobileMenu = function(){
+    const navLinks = document.getElementById('navLinks');
+    if(!navLinks) return;
+    setMobileMenuState(!navLinks.classList.contains('mobile-open'));
+  };
+
+  window.closeMobileMenu = function(){
+    setMobileMenuState(false);
+  };
+
+  function setupMobileMenu(){
+    const navLinks = document.getElementById('navLinks');
+    const menuBtn = document.getElementById('mobileMenuToggle');
+
+    if(!navLinks || !menuBtn) return;
+
+    navLinks.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => setMobileMenuState(false));
+    });
+
+    document.addEventListener('click', function(e){
+      const navbar = document.querySelector('.navbar');
+      if(!navbar || !navLinks.classList.contains('mobile-open')) return;
+      if(!navbar.contains(e.target)) setMobileMenuState(false);
+    });
+
+    document.addEventListener('keydown', function(e){
+      if(e.key === 'Escape') setMobileMenuState(false);
+    });
+
+    window.addEventListener('resize', function(){
+      if(window.innerWidth > 760) setMobileMenuState(false);
+    });
+  }
+
   function loadNavbar(){
     const currentPage = window.location.pathname.split('/').pop() || 'index.html';
 
@@ -18,12 +70,22 @@
   <nav class="navbar">
     <a class="nav-logo" href="index.html">
       <div class="logo-mark">
-        <img src="images/Logo/tmLogo.png" alt="Thushan Motors Logo">
+        <img src="Images/Logo/tmLogo.png" alt="Thushan Motors Logo">
       </div>
       <div class="brand-name"><span>THUSHAN</span> MOTORS</div>
     </a>
 
-    <ul class="nav-links">
+    <button
+      type="button"
+      class="mobile-menu-toggle"
+      id="mobileMenuToggle"
+      onclick="toggleMobileMenu()"
+      aria-label="Open navigation menu"
+      aria-expanded="false">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+
+    <ul class="nav-links" id="navLinks">
       <li>
         <a href="index.html" class="${isHome ? 'active' : ''}">
           <i class="fa-solid fa-house"></i> Home
@@ -86,10 +148,6 @@
       <div id="userInfo" class="user-info hidden">
         <div class="user-avatar-nav" id="userAvatarNav">U</div>
         <span class="user-name-nav" id="userNameNav">User</span>
-
-        <a id="adminPanelBtn" href="admin.html" class="btn-red" style="display:none;text-decoration:none;font-size:11px;padding:7px 12px;border-radius:8px;align-items:center;gap:5px">
-          <i class="fa-solid fa-gear" style="font-size:11px"></i> Admin
-        </a>
 
         <button class="btn-logout" onclick="doLogout()">
           <i class="fa-solid fa-right-from-bracket" style="font-size:11px"></i> Logout
@@ -496,6 +554,7 @@
     }
 
     container.innerHTML = navbarHTML;
+    setupMobileMenu();
   }
 
   window.loadNavbar = loadNavbar;
