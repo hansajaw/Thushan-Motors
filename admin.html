@@ -354,7 +354,6 @@ input:checked + .slider:before { transform: translateX(20px); }
             <label class="toggle"><input type="checkbox" id="pf-featured"><span class="slider"></span></label>
             <span class="toggle-label">Featured</span>
           </div>
-
         </div>
         <input type="hidden" id="pf-edit-id">
         <input type="hidden" id="pf-img-base64">
@@ -441,17 +440,19 @@ input:checked + .slider:before { transform: translateX(20px); }
         <button class="btn-primary" onclick="openUserForm()"><i class="fa-solid fa-user-shield"></i> Add User</button>
       </div>
       <div class="table-container" id="user-form-card" style="display:none;padding:24px">
-        <h3 style="margin-bottom:18px">Add Admin User</h3>
+        <h3 style="margin-bottom:18px">Add System User</h3>
         <div class="form-grid">
-          <div class="form-group"><label>Full Name *</label><input type="text" id="uf-name" required></div>
-          <div class="form-group"><label>Email *</label><input type="email" id="uf-email" required></div>
+          <div class="form-group"><label>Full Name *</label><input type="text" id="uf-name" placeholder="e.g. Kasun Perera" required></div>
+          <div class="form-group"><label>Email *</label><input type="email" id="uf-email" placeholder="e.g. kasun@example.com" required></div>
+          <div class="form-group"><label>Password *</label><input type="password" id="uf-password" placeholder="Set a password for this user"></div>
           <div class="form-group"><label>Role</label>
             <select id="uf-role"><option value="admin">Admin</option><option value="customer">Customer</option></select>
           </div>
         </div>
+        <p style="font-size:12px;color:var(--text3);margin-bottom:14px"><i class="fa-solid fa-circle-info" style="color:var(--blue)"></i> Leave password blank to auto-generate a temporary one (shown after saving).</p>
         <div style="display:flex;gap:10px;justify-content:flex-end">
           <button class="btn-secondary" onclick="closeUserForm()">Cancel</button>
-          <button class="btn-primary" onclick="saveUser()"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+          <button class="btn-primary" onclick="saveUser()"><i class="fa-solid fa-floppy-disk"></i> Save User</button>
         </div>
       </div>
       <div class="table-container">
@@ -723,7 +724,8 @@ async function syncAll() {
     renderAll();
     toast('Data synced.', 'success');
   } catch(e) {
-    toast('Sync failed: ' + e.message, 'danger');
+    toast('Sync failed: ' + (e.message || 'Connection error. Check if backend is running.'), 'danger');
+    renderAll(); // still render with whatever data we have
   }
 }
 
@@ -741,11 +743,14 @@ function renderAll() {
 
 // ── Dashboard ──
 function renderDashboard() {
-  const today = new Date().toISOString().substring(0,10);
+  const today = new Date();
+  const todayStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
   let todayCnt = 0, totalRev = 0;
   sales.forEach(s => {
-    totalRev += Number(s.total || 0);
-    if (String(s.createdAt || '').substring(0,10) === today) todayCnt++;
+    const amt = Number(s.total || 0);
+    totalRev += amt;
+    const sDate = s.createdAt ? String(s.createdAt).substring(0,10) : '';
+    if (sDate === todayStr) todayCnt++;
   });
   document.getElementById('stat-today').textContent = todayCnt;
   document.getElementById('stat-revenue').textContent = 'Rs. ' + totalRev.toLocaleString('en-US', {minimumFractionDigits:2});
@@ -754,12 +759,13 @@ function renderDashboard() {
 
   const tbody = document.getElementById('dash-recent-tbody');
   tbody.innerHTML = '';
-  const recent = [...sales].reverse().slice(0, 6);
-  if (!recent.length) { tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text3)">No orders yet.</td></tr>`; return; }
+  // Sort by id DESC (most recent first) then take top 6
+  const recent = [...sales].sort((a,b) => (b.id||0) - (a.id||0)).slice(0, 6);
+  if (!recent.length) { tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:20px">No orders yet.</td></tr>`; return; }
+  const statusMap = { pending:'info', confirmed:'info', packed:'orange', shipped:'orange', delivered:'success', cancelled:'danger' };
   recent.forEach(s => {
-    const statusMap = { pending:'info', confirmed:'info', packed:'orange', shipped:'orange', delivered:'success', cancelled:'danger' };
     tbody.innerHTML += `<tr>
-      <td><strong>${s.orderNumber || '#'+s.id}</strong></td>
+      <td><strong>${s.orderNumber || 'TM-'+String(s.id).padStart(5,'0')}</strong></td>
       <td>${s.customerName || 'Guest'}</td>
       <td>${fmtDate(s.createdAt)}</td>
       <td style="color:var(--green);font-weight:600">Rs. ${Number(s.total||0).toFixed(2)}</td>
@@ -1123,7 +1129,8 @@ function renderUsersTable() {
 function openUserForm() { document.getElementById('user-form-card').style.display = 'block'; }
 function closeUserForm() { document.getElementById('user-form-card').style.display = 'none'; }
 async function saveUser() {
-  const autoPass = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-4).toUpperCase() + '1!';
+  const typedPass = (document.getElementById('uf-password')?.value || '').trim();
+  const autoPass = typedPass || (Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-4).toUpperCase() + '1!');
   const payload = {
     name: document.getElementById('uf-name').value.trim(),
     email: document.getElementById('uf-email').value.trim(),
@@ -1133,7 +1140,15 @@ async function saveUser() {
   if (!payload.name || !payload.email) { toast('Name and email are required.', 'danger'); return; }
   try {
     await api('/api/admin/users', { method: 'POST', body: JSON.stringify(payload) });
-    toast('User created! Temp password: ' + autoPass, 'info');
+    if (!typedPass) {
+      toast('User created! Temporary password: ' + autoPass, 'info');
+    } else {
+      toast('User created successfully!', 'success');
+    }
+    // Reset form
+    document.getElementById('uf-name').value = '';
+    document.getElementById('uf-email').value = '';
+    if (document.getElementById('uf-password')) document.getElementById('uf-password').value = '';
     closeUserForm();
     users = await api('/api/admin/users').catch(() => users);
     renderUsersTable();
@@ -1146,17 +1161,17 @@ async function deleteUser(id) {
     users = users.filter(u => u.id !== id);
     renderUsersTable();
     toast('User deleted.', 'success');
-  } catch(e) { toast('Error: ' + e.message, 'danger'); }
+  } catch(e) { toast('Delete failed: ' + e.message, 'danger'); }
 }
 
 async function deleteCustomer(id) {
-  if (!confirm('Delete this customer?')) return;
+  if (!confirm('Delete this customer? This will also remove their order history.')) return;
   try {
-    await api(`/api/admin/users/${id}`, { method: 'DELETE' });
+    await api(`/api/admin/customers/${id}`, { method: 'DELETE' });
     customers = customers.filter(c => c.id !== id);
     renderCustomersTable();
     toast('Customer deleted.', 'success');
-  } catch(e) { toast('Error: ' + e.message, 'danger'); }
+  } catch(e) { toast('Delete failed: ' + e.message, 'danger'); }
 }
 
 // ── Sales History ──
@@ -1171,13 +1186,20 @@ function renderSalesTable() {
   );
   if (!filtered.length) { tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--text3)">No orders found.</td></tr>`; return; }
   const statusMap = { pending:'info', confirmed:'info', packed:'orange', shipped:'orange', delivered:'success', cancelled:'danger' };
-  [...filtered].reverse().forEach(s => {
+  // Sort most recent first
+  [...filtered].sort((a,b) => (b.id||0) - (a.id||0)).forEach((s, idx) => {
     const pmBadge = s.paymentMethod === 'cash_on_delivery' ? `<span class="badge info">COD</span>` : s.paymentMethod === 'bank_transfer' ? `<span class="badge purple">Bank</span>` : `<span class="badge success">Card</span>`;
+    // Calculate items count safely
+    let itmCount = Number(s.itemsCount || 0);
+    if (!itmCount && Array.isArray(s.items) && s.items.length) {
+      itmCount = s.items.reduce((a, i) => a + Number(i.quantity || i.qty || 1), 0);
+    }
+    const itmDisplay = itmCount > 0 ? itmCount : '—';
     tbody.innerHTML += `<tr>
-      <td><strong>${s.orderNumber || '#'+s.id}</strong></td>
+      <td><strong>${s.orderNumber || 'TM-'+String(s.id).padStart(5,'0')}</strong></td>
       <td>${fmtDate(s.createdAt)}</td>
       <td>${s.customerName || 'Guest'}</td>
-      <td style="text-align:center"><strong>${s.itemsCount || (Array.isArray(s.items) ? s.items.reduce((a,i)=>a+(i.quantity||i.qty||1),0) : '—')}</strong></td>
+      <td style="text-align:center"><strong>${itmDisplay}</strong></td>
       <td style="color:var(--green);font-weight:700">Rs. ${Number(s.total||0).toFixed(2)}</td>
       <td>${pmBadge}</td>
       <td><span class="badge ${statusMap[s.status]||'info'}">${s.status||'pending'}</span></td>

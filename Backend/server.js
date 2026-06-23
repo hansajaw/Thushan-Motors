@@ -1355,9 +1355,25 @@ app.post('/api/admin/users', requireAdmin, asyncHandler(async (req, res) => {
 }));
 
 app.delete('/api/admin/users/:id', requireAdmin, asyncHandler(async (req, res) => {
-  const [result] = await getPool().query('DELETE FROM users WHERE id = ? AND role != "admin"', [Number(req.params.id)]);
-  if (!result.affectedRows) return res.status(404).json({ message: 'User not found or cannot delete admin.' });
+  const targetId = Number(req.params.id);
+  if (req.user && req.user.id === targetId) {
+    return res.status(400).json({ message: 'You cannot delete your own account.' });
+  }
+  const [result] = await getPool().query('DELETE FROM users WHERE id = ?', [targetId]);
+  if (!result.affectedRows) return res.status(404).json({ message: 'User not found.' });
   res.json({ message: 'User deleted.' });
+}));
+
+// ADMIN: DELETE CUSTOMER
+app.delete('/api/admin/customers/:id', requireAdmin, asyncHandler(async (req, res) => {
+  const targetId = Number(req.params.id);
+  if (req.user && req.user.id === targetId) {
+    return res.status(400).json({ message: 'You cannot delete your own account.' });
+  }
+  const pool = getPool();
+  const [result] = await pool.query('DELETE FROM users WHERE id = ? AND role = \'customer\'', [targetId]);
+  if (!result.affectedRows) return res.status(404).json({ message: 'Customer not found.' });
+  res.json({ message: 'Customer deleted.' });
 }));
 
 // ─── ADMIN: SUPPLIERS ─────────────────────────────────────────────────────────
