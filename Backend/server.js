@@ -615,37 +615,37 @@ app.get('/api/auth/me', requireAuth, (req, res) => {
 });
 
 app.post('/api/orders', requireAuth, asyncHandler(async (req, res) => {
-  const {
-    customerName,
-    customerPhone,
-    deliveryName,
-    deliveryPhone,
-    deliveryAddress,
-    deliveryDistrict,
-    deliveryNotes,
-    paymentMethod = 'cash_on_delivery',
-    items = [],
-    subtotal,
-    discount = 0,
-    total
-  } = req.body;
-
-  const finalDeliveryName = String(deliveryName || customerName || req.user.name || '').trim();
-  const finalDeliveryPhone = String(deliveryPhone || customerPhone || req.user.phone || '').trim();
-  const finalDeliveryAddress = String(deliveryAddress || '').trim();
-  const finalDeliveryDistrict = String(deliveryDistrict || 'Not specified').trim();
-  const finalDeliveryNotes = String(deliveryNotes || '').trim();
-
-  if (!finalDeliveryName || !finalDeliveryPhone || !finalDeliveryAddress) {
-    return res.status(400).json({
-      message: 'Name, phone number and delivery address are required.'
-    });
-  }
+  const { items = [], delivery = {}, paymentMethod = 'cash_on_delivery' } = req.body;
 
   if (!Array.isArray(items) || items.length === 0) {
-    return res.status(400).json({
-      message: 'Order must contain at least one product.'
-    });
+    return res.status(400).json({ message: 'Order items are required.' });
+  }
+
+  const allowedPaymentMethods = ['cash_on_delivery', 'bank_transfer', 'card'];
+  if (!allowedPaymentMethods.includes(paymentMethod)) {
+    return res.status(400).json({ message: 'Please select a valid payment method.' });
+  }
+
+  const deliveryName = String(delivery.name || '').trim();
+  const deliveryPhone = String(delivery.phone || '').trim();
+  const deliveryAddress = String(delivery.address || '').trim();
+  const deliveryDistrict = String(delivery.district || '').trim();
+  const deliveryNotes = String(delivery.notes || '').trim();
+
+  if (!deliveryName) return res.status(400).json({ message: 'Delivery name is required.' });
+  if (!deliveryPhone) return res.status(400).json({ message: 'Delivery phone number is required.' });
+  if (!/^[0-9+\-\s()]{7,20}$/.test(deliveryPhone)) return res.status(400).json({ message: 'Please enter a valid phone number.' });
+  if (!deliveryAddress) return res.status(400).json({ message: 'Delivery address is required.' });
+  if (!deliveryDistrict) return res.status(400).json({ message: 'Delivery district or city is required.' });
+
+  if (paymentMethod === 'card') {
+    const payment = req.body.payment || {};
+    const cardName = String(payment.cardName || '').trim();
+    const cardLast4 = String(payment.cardLast4 || '').trim();
+    const expiry = String(payment.expiry || '').trim();
+    if (!cardName) return res.status(400).json({ message: 'Card name is required.' });
+    if (!/^\d{4}$/.test(cardLast4)) return res.status(400).json({ message: 'Card last 4 digits are required.' });
+    if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(expiry)) return res.status(400).json({ message: 'Card expiry must be in MM/YY format.' });
   }
 
   const pool = getPool();
@@ -655,146 +655,70 @@ app.post('/api/orders', requireAuth, asyncHandler(async (req, res) => {
     await connection.beginTransaction();
 
     const orderItems = [];
-    let calculatedSubtotal = 0;
+    let total = 0;
 
     for (const line of items) {
       const productId = Number(line.productId || line.id);
       const quantity = Math.max(1, Number(line.quantity || line.qty || 1));
 
-      if (!productId) {
-        await connection.rollback();
-        return res.status(400).json({ message: 'Invalid product in cart.' });
-      }
-
-      const [productRows] = await connection.query(
-        'SELECT * FROM products WHERE id = ? FOR UPDATE',
-        [productId]
-      );
-
+      const [productRows] = await connection.query('SELECT * FROM products WHERE id = ? FOR UPDATE', [productId]);
       const product = productRows[0];
 
       if (!product) {
         await connection.rollback();
         return res.status(400).json({ message: `Product ${productId} not found.` });
       }
-
       if (!product.stock) {
         await connection.rollback();
         return res.status(400).json({ message: `${product.name} is out of stock.` });
       }
 
       const price = Number(product.price);
-      const lineSubtotal = price * quantity;
+      const subtotal = price * quantity;
+      total += subtotal;
 
-      calculatedSubtotal += lineSubtotal;
-
-      orderItems.push({
-        productId: product.id,
-        name: product.name,
-        price,
-        quantity,
-        subtotal: lineSubtotal
-      });
+      orderItems.push({ productId: product.id, name: product.name, price, quantity, subtotal });
     }
-
-    const finalSubtotal = Number(subtotal || calculatedSubtotal);
-    const finalDiscount = Number(discount || 0);
-    const finalTotal = Number(total || finalSubtotal - finalDiscount);
-
-    const tempOrderNo = `T${Date.now().toString().slice(-12)}`;
 
     const [orderResult] = await connection.query(
       `INSERT INTO orders
-        (
-          order_no,
-          user_id,
-          subtotal,
-          discount,
-          total,
-          delivery_name,
-          delivery_phone,
-          delivery_address,
-          delivery_district,
-          delivery_notes,
-          payment_method,
-          payment_status,
-          status
-        )
+        (order_no, user_id, subtotal, discount, total, delivery_name, delivery_phone, delivery_address, delivery_district, delivery_notes, payment_method, payment_status, status)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        tempOrderNo,
+        '',
         req.user.id,
-        finalSubtotal,
-        finalDiscount,
-        finalTotal,
-        finalDeliveryName,
-        finalDeliveryPhone,
-        finalDeliveryAddress,
-        finalDeliveryDistrict,
-        finalDeliveryNotes,
+        total,   // subtotal = item total (no discount on customer checkout)
+        0,       // discount = 0 for customer checkout
+        total,
+        deliveryName,
+        deliveryPhone,
+        deliveryAddress,
+        deliveryDistrict,
+        deliveryNotes,
         paymentMethod,
-        'pending',
+        paymentMethod === 'cash_on_delivery' ? 'pending' : 'unpaid',
         'pending'
       ]
     );
 
     const orderId = orderResult.insertId;
-    const finalOrderNo = orderNumber(orderId);
-
-    await connection.query(
-      'UPDATE orders SET order_no = ? WHERE id = ?',
-      [finalOrderNo, orderId]
-    );
+    const orderNo = orderNumber(orderId);
+    await connection.query('UPDATE orders SET order_no = ? WHERE id = ?', [orderNo, orderId]);
 
     for (const item of orderItems) {
       await connection.query(
-        `INSERT INTO order_items
-          (
-            order_id,
-            product_id,
-            name,
-            price,
-            quantity,
-            subtotal
-          )
-         VALUES (?, ?, ?, ?, ?, ?)`,
-        [
-          orderId,
-          item.productId,
-          item.name,
-          item.price,
-          item.quantity,
-          item.subtotal
-        ]
+        'INSERT INTO order_items (order_id, product_id, name, price, quantity, subtotal) VALUES (?, ?, ?, ?, ?, ?)',
+        [orderId, item.productId, item.name, item.price, item.quantity, item.subtotal]
       );
     }
 
     await connection.commit();
 
-    res.status(201).json({
-      message: 'Order saved successfully.',
-      order: {
-        id: orderId,
-        orderNo: finalOrderNo,
-        customerName: finalDeliveryName,
-        customerPhone: finalDeliveryPhone,
-        deliveryAddress: finalDeliveryAddress,
-        deliveryDistrict: finalDeliveryDistrict,
-        deliveryNotes: finalDeliveryNotes,
-        paymentMethod,
-        subtotal: finalSubtotal,
-        discount: finalDiscount,
-        total: finalTotal,
-        status: 'pending',
-        items: orderItems
-      }
-    });
+    const [orderRows] = await pool.query('SELECT * FROM orders WHERE id = ?', [orderId]);
+    res.status(201).json(mapOrder(orderRows[0], orderItems, cleanUser(req.user)));
   } catch (err) {
     await connection.rollback();
-    console.error('Order save error:', err);
-    res.status(500).json({
-      message: 'Could not save order.',
-    });
+    throw err;
   } finally {
     connection.release();
   }
@@ -1310,29 +1234,22 @@ app.get('/api/admin/sales', requireAdmin, asyncHandler(async (req, res) => {
       subtotal: Number(i.subtotal || 0)
     }));
     const totalQty = orderItems.reduce((s, i) => s + i.quantity, 0);
-      return {
-        id: o.id,
-        orderNumber: o.order_no || `TM-${String(o.id).padStart(5, '0')}`,
-        customerName: o.delivery_name || o.customer_name,
-        customerEmail: o.customer_email,
-        customerPhone: o.delivery_phone || o.customer_phone || '',
-
-        deliveryName: o.delivery_name || '',
-        deliveryPhone: o.delivery_phone || '',
-        deliveryAddress: o.delivery_address || '',
-        deliveryDistrict: o.delivery_district || '',
-        deliveryNotes: o.delivery_notes || '',
-
-        status: o.status,
-        subtotal: Number(o.subtotal || o.total),
-        discount: Number(o.discount || 0),
-        total: Number(o.total),
-        paymentMethod: o.payment_method,
-        paymentStatus: o.payment_status,
-        createdAt: o.created_at,
-        itemsCount: totalQty,
-        items: orderItems
-      };
+    return {
+      id: o.id,
+      orderNumber: `TM-${String(o.id).padStart(5, '0')}`,
+      customerName: o.customer_name,
+      customerEmail: o.customer_email,
+      customerPhone: o.customer_phone || '',
+      status: o.status,
+      subtotal: Number(o.subtotal || o.total),
+      discount: Number(o.discount || 0),
+      total: Number(o.total),
+      paymentMethod: o.payment_method,
+      paymentStatus: o.payment_status,
+      createdAt: o.created_at,
+      itemsCount: totalQty,
+      items: orderItems
+    };
   }));
 }));
 
@@ -1438,89 +1355,11 @@ app.post('/api/admin/users', requireAdmin, asyncHandler(async (req, res) => {
 }));
 
 app.delete('/api/admin/users/:id', requireAdmin, asyncHandler(async (req, res) => {
-  const id = Number(req.params.id);
-
-  if (!id) {
-    return res.status(400).json({ message: 'Invalid user id.' });
-  }
-
-  if (req.user && Number(req.user.id) === id) {
-    return res.status(400).json({ message: 'You cannot delete your own admin account.' });
-  }
-
-  const pool = getPool();
-  const connection = await pool.getConnection();
-
-  try {
-    await connection.beginTransaction();
-
-    const [userRows] = await connection.query(
-      'SELECT id, role FROM users WHERE id = ? LIMIT 1',
-      [id]
-    );
-
-    const user = userRows[0];
-
-    if (!user) {
-      await connection.rollback();
-      return res.status(404).json({ message: 'User not found.' });
-    }
-
-    if (user.role === 'admin') {
-      await connection.rollback();
-      return res.status(400).json({ message: 'Admin users cannot be deleted.' });
-    }
-
-    const [orderRows] = await connection.query(
-      'SELECT id FROM orders WHERE user_id = ?',
-      [id]
-    );
-
-    const orderIds = orderRows.map(o => o.id);
-
-    if (orderIds.length) {
-      const placeholders = orderIds.map(() => '?').join(',');
-
-      await connection.query(
-        `DELETE FROM order_items WHERE order_id IN (${placeholders})`,
-        orderIds
-      );
-
-      await connection.query(
-        `DELETE FROM orders WHERE id IN (${placeholders})`,
-        orderIds
-      );
-    }
-
-    await connection.query(
-      'DELETE FROM reviews WHERE user_id = ?',
-      [id]
-    );
-
-    const [result] = await connection.query(
-      'DELETE FROM users WHERE id = ? AND role = ?',
-      [id, 'customer']
-    );
-
-    if (!result.affectedRows) {
-      await connection.rollback();
-      return res.status(404).json({ message: 'Customer not found.' });
-    }
-
-    await connection.commit();
-
-    res.json({ message: 'User deleted.' });
-  } catch (err) {
-    await connection.rollback();
-    console.error('Delete user error:', err);
-    res.status(500).json({
-      message: 'Could not delete user.',
-      error: err.message
-    });
-  } finally {
-    connection.release();
-  }
+  const [result] = await getPool().query('DELETE FROM users WHERE id = ? AND role != "admin"', [Number(req.params.id)]);
+  if (!result.affectedRows) return res.status(404).json({ message: 'User not found or cannot delete admin.' });
+  res.json({ message: 'User deleted.' });
 }));
+
 // ─── ADMIN: SUPPLIERS ─────────────────────────────────────────────────────────
 app.get('/api/admin/suppliers', requireAdmin, asyncHandler(async (req, res) => {
   const [rows] = await getPool().query('SELECT * FROM suppliers ORDER BY id DESC');
@@ -1560,128 +1399,6 @@ app.delete('/api/admin/suppliers/:id', requireAdmin, asyncHandler(async (req, re
   const [result] = await getPool().query('DELETE FROM suppliers WHERE id = ?', [Number(req.params.id)]);
   if (!result.affectedRows) return res.status(404).json({ message: 'Supplier not found.' });
   res.json({ message: 'Supplier deleted.' });
-}));
-
-// ─── ADMIN: UPDATE CUSTOMER ─────────────────────────────
-app.patch('/api/admin/customers/:id', requireAdmin, asyncHandler(async (req, res) => {
-  const id = Number(req.params.id);
-  const { name, phone = '', email = '' } = req.body;
-
-  if (!name || !String(name).trim()) {
-    return res.status(400).json({ message: 'Customer name is required.' });
-  }
-
-  if (email && !validateEmail(email)) {
-    return res.status(400).json({ message: 'Invalid email address.' });
-  }
-
-  const [result] = await getPool().query(
-    `UPDATE users
-     SET name = ?, phone = ?, email = ?
-     WHERE id = ? AND role = 'customer'`,
-    [
-      String(name).trim(),
-      String(phone).trim(),
-      String(email).trim().toLowerCase(),
-      id
-    ]
-  );
-
-  if (!result.affectedRows) {
-    return res.status(404).json({ message: 'Customer not found.' });
-  }
-
-  res.json({ message: 'Customer updated.' });
-}));
-
-// ─── ADMIN: UPDATE USER ─────────────────────────────
-app.patch('/api/admin/users/:id', requireAdmin, asyncHandler(async (req, res) => {
-  const id = Number(req.params.id);
-  const { name, email, phone = '', role = 'customer', password = '' } = req.body;
-
-  if (!name || !email) {
-    return res.status(400).json({ message: 'Name and email are required.' });
-  }
-
-  if (!validateEmail(email)) {
-    return res.status(400).json({ message: 'Invalid email address.' });
-  }
-
-  const allowedRoles = ['admin', 'customer'];
-  if (!allowedRoles.includes(role)) {
-    return res.status(400).json({ message: 'Invalid role.' });
-  }
-
-  const params = [
-    String(name).trim(),
-    String(email).trim().toLowerCase(),
-    String(phone).trim(),
-    role
-  ];
-
-  let sql = `
-    UPDATE users
-    SET name = ?, email = ?, phone = ?, role = ?
-  `;
-
-  if (password && String(password).trim().length > 0) {
-    if (String(password).length < 8) {
-      return res.status(400).json({ message: 'Password must be at least 8 characters.' });
-    }
-
-    const { hashPassword: hp } = require('./utils/password');
-    sql += `, password_hash = ?`;
-    params.push(hp(password));
-  }
-
-  sql += ` WHERE id = ?`;
-  params.push(id);
-
-  const [result] = await getPool().query(sql, params);
-
-  if (!result.affectedRows) {
-    return res.status(404).json({ message: 'User not found.' });
-  }
-
-  res.json({ message: 'User updated.' });
-}));
-
-// ─── ADMIN: DELETE ORDER / SALE ─────────────────────────────
-app.delete('/api/admin/orders/:id', requireAdmin, asyncHandler(async (req, res) => {
-  const id = Number(req.params.id);
-
-  const [result] = await getPool().query(
-    'DELETE FROM orders WHERE id = ?',
-    [id]
-  );
-
-  if (!result.affectedRows) {
-    return res.status(404).json({ message: 'Order not found.' });
-  }
-
-  res.json({ message: 'Order deleted.' });
-}));
-
-// ─── ADMIN: MESSAGE STATUS UPDATE ─────────────────────────────
-app.patch('/api/admin/messages/:id/status', requireAdmin, asyncHandler(async (req, res) => {
-  const id = Number(req.params.id);
-  const { status = 'read' } = req.body;
-
-  const allowed = ['new', 'read', 'replied'];
-  if (!allowed.includes(status)) {
-    return res.status(400).json({ message: 'Invalid message status.' });
-  }
-
-  const [result] = await getPool().query(
-    'UPDATE messages SET status = ? WHERE id = ?',
-    [status, id]
-  );
-
-  if (!result.affectedRows) {
-    return res.status(404).json({ message: 'Message not found.' });
-  }
-
-  res.json({ message: 'Message status updated.' });
 }));
 
 // Only serve index.html for HTML page routes, not asset requests
