@@ -699,7 +699,7 @@ async function resendOtp(){
       return;
     }
 
-    showToast('📧 New OTP sent to your email.');
+    showToast('📧 New OTP sent. Check Inbox or Spam/Junk folder.');
   }catch(err){
     console.error('Resend OTP error:', err);
     showToast('⚠️ Failed to resend OTP.');
@@ -831,7 +831,7 @@ async function doRegister(){
 
     if(data.needsVerification){
       switchToOtp(data.email || email);
-      showToast('📧 OTP sent to your email. Please verify your account.');
+      showToast('📧 OTP sent to your email. Check Inbox or Spam/Junk folder.');
 
       ['regPassword','regConfirm'].forEach(function(id){
         if($(id)){
