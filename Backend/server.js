@@ -1484,6 +1484,128 @@ app.delete('/api/admin/suppliers/:id', requireAdmin, asyncHandler(async (req, re
   res.json({ message: 'Supplier deleted.' });
 }));
 
+// ─── ADMIN: UPDATE CUSTOMER ─────────────────────────────
+app.patch('/api/admin/customers/:id', requireAdmin, asyncHandler(async (req, res) => {
+  const id = Number(req.params.id);
+  const { name, phone = '', email = '' } = req.body;
+
+  if (!name || !String(name).trim()) {
+    return res.status(400).json({ message: 'Customer name is required.' });
+  }
+
+  if (email && !validateEmail(email)) {
+    return res.status(400).json({ message: 'Invalid email address.' });
+  }
+
+  const [result] = await getPool().query(
+    `UPDATE users
+     SET name = ?, phone = ?, email = ?
+     WHERE id = ? AND role = 'customer'`,
+    [
+      String(name).trim(),
+      String(phone).trim(),
+      String(email).trim().toLowerCase(),
+      id
+    ]
+  );
+
+  if (!result.affectedRows) {
+    return res.status(404).json({ message: 'Customer not found.' });
+  }
+
+  res.json({ message: 'Customer updated.' });
+}));
+
+// ─── ADMIN: UPDATE USER ─────────────────────────────
+app.patch('/api/admin/users/:id', requireAdmin, asyncHandler(async (req, res) => {
+  const id = Number(req.params.id);
+  const { name, email, phone = '', role = 'customer', password = '' } = req.body;
+
+  if (!name || !email) {
+    return res.status(400).json({ message: 'Name and email are required.' });
+  }
+
+  if (!validateEmail(email)) {
+    return res.status(400).json({ message: 'Invalid email address.' });
+  }
+
+  const allowedRoles = ['admin', 'customer'];
+  if (!allowedRoles.includes(role)) {
+    return res.status(400).json({ message: 'Invalid role.' });
+  }
+
+  const params = [
+    String(name).trim(),
+    String(email).trim().toLowerCase(),
+    String(phone).trim(),
+    role
+  ];
+
+  let sql = `
+    UPDATE users
+    SET name = ?, email = ?, phone = ?, role = ?
+  `;
+
+  if (password && String(password).trim().length > 0) {
+    if (String(password).length < 8) {
+      return res.status(400).json({ message: 'Password must be at least 8 characters.' });
+    }
+
+    const { hashPassword: hp } = require('./utils/password');
+    sql += `, password_hash = ?`;
+    params.push(hp(password));
+  }
+
+  sql += ` WHERE id = ?`;
+  params.push(id);
+
+  const [result] = await getPool().query(sql, params);
+
+  if (!result.affectedRows) {
+    return res.status(404).json({ message: 'User not found.' });
+  }
+
+  res.json({ message: 'User updated.' });
+}));
+
+// ─── ADMIN: DELETE ORDER / SALE ─────────────────────────────
+app.delete('/api/admin/orders/:id', requireAdmin, asyncHandler(async (req, res) => {
+  const id = Number(req.params.id);
+
+  const [result] = await getPool().query(
+    'DELETE FROM orders WHERE id = ?',
+    [id]
+  );
+
+  if (!result.affectedRows) {
+    return res.status(404).json({ message: 'Order not found.' });
+  }
+
+  res.json({ message: 'Order deleted.' });
+}));
+
+// ─── ADMIN: MESSAGE STATUS UPDATE ─────────────────────────────
+app.patch('/api/admin/messages/:id/status', requireAdmin, asyncHandler(async (req, res) => {
+  const id = Number(req.params.id);
+  const { status = 'read' } = req.body;
+
+  const allowed = ['new', 'read', 'replied'];
+  if (!allowed.includes(status)) {
+    return res.status(400).json({ message: 'Invalid message status.' });
+  }
+
+  const [result] = await getPool().query(
+    'UPDATE messages SET status = ? WHERE id = ?',
+    [status, id]
+  );
+
+  if (!result.affectedRows) {
+    return res.status(404).json({ message: 'Message not found.' });
+  }
+
+  res.json({ message: 'Message status updated.' });
+}));
+
 // Only serve index.html for HTML page routes, not asset requests
 app.get('*', (req, res) => {
   const p = req.path;
