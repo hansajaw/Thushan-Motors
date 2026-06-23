@@ -7,7 +7,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 :root {
@@ -159,50 +158,6 @@ input:checked + .slider:before { transform: translateX(20px); }
 .modal-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; padding: 32px; width: 100%; max-width: 580px; max-height: 85vh; overflow-y: auto; }
 .modal-box h3 { font-size: 18px; margin-bottom: 20px; }
 
-/* Enhanced order detail modal */
-.order-detail-modal .modal-box { max-width: 700px; }
-.order-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; font-size: 13px; }
-.order-detail-grid .detail-row { display: flex; flex-direction: column; gap: 3px; }
-.order-detail-grid .detail-label { color: var(--text3); font-size: 11px; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; }
-.order-detail-grid .detail-val { color: var(--text); font-size: 13.5px; font-weight: 500; }
-.order-items-table { width: 100%; border-collapse: collapse; background: var(--bg3); border-radius: 10px; overflow: hidden; margin-bottom: 16px; }
-.order-items-table th { background: var(--bg4); padding: 10px 14px; font-size: 11.5px; font-weight: 600; color: var(--text2); text-transform: uppercase; text-align: left; }
-.order-items-table td { padding: 10px 14px; font-size: 13px; border-top: 1px solid var(--border); }
-.order-totals { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; padding: 14px; background: var(--bg3); border-radius: 10px; margin-bottom: 16px; }
-.order-totals .tot-row { display: flex; gap: 20px; font-size: 13px; }
-.order-totals .tot-label { color: var(--text2); min-width: 120px; text-align: right; }
-.order-totals .tot-val { color: var(--text); min-width: 120px; text-align: right; }
-.order-totals .tot-row.grand .tot-label, .order-totals .tot-row.grand .tot-val { font-size: 16px; font-weight: 700; color: var(--green); }
-
-/* Delivery info section */
-.delivery-card { background: var(--bg3); border-radius: 10px; padding: 14px; margin-bottom: 16px; border: 1px solid var(--border); }
-.delivery-card h4 { font-size: 12px; text-transform: uppercase; color: var(--text3); font-weight: 600; letter-spacing: 0.5px; margin-bottom: 10px; }
-.delivery-rows { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px; }
-.delivery-rows .dr { display: flex; flex-direction: column; gap: 2px; }
-.delivery-rows .dr span:first-child { color: var(--text3); font-size: 11px; }
-.delivery-rows .dr span:last-child { color: var(--text); }
-
-/* Status update bar */
-.status-update-bar { display: flex; align-items: center; gap: 10px; padding-top: 14px; border-top: 1px solid var(--border); flex-wrap: wrap; }
-.status-update-bar select { background: var(--bg3); border: 1px solid var(--border); color: var(--text); padding: 9px 14px; border-radius: 8px; font-size: 13px; flex: 1; min-width: 140px; cursor: pointer; }
-
-/* Charts */
-.chart-container { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 22px; margin-bottom: 28px; }
-.chart-container h3 { font-size: 15px; font-weight: 700; margin-bottom: 18px; color: var(--text); }
-.charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px; }
-@media (max-width: 900px) { .charts-grid { grid-template-columns: 1fr; } }
-
-/* Sales filters */
-.sales-filters { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-.filter-select { background: var(--bg3); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 8px; font-size: 13px; cursor: pointer; }
-
-/* Report export buttons */
-.export-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-.btn-export { background: var(--bg3); color: var(--text); border: 1px solid var(--border); padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 7px; transition: all 0.2s; }
-.btn-export:hover { background: var(--border); }
-.btn-export.green { color: var(--green); border-color: var(--green); }
-.btn-export.green:hover { background: var(--green-dim); }
-
 /* Responsive */
 .mobile-toggle { display: none; font-size: 22px; background: none; border: none; color: var(--text); cursor: pointer; margin-bottom: 16px; }
 .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 99; }
@@ -213,15 +168,6 @@ input:checked + .slider:before { transform: translateX(20px); }
   .sidebar-overlay.open { display: block; }
   .main-content { margin-left: 0; padding: 16px 18px; }
   .mobile-toggle { display: block; }
-  .order-detail-grid { grid-template-columns: 1fr; }
-  .delivery-rows { grid-template-columns: 1fr; }
-}
-
-@media print {
-  .sidebar, .toast-container, .mobile-toggle, .btn-icon, .status-update-bar, .header-actions, .export-bar { display: none !important; }
-  .main-content { margin-left: 0 !important; padding: 0 !important; }
-  .tab-content { display: block !important; }
-  #tab-reports { display: block !important; }
 }
 </style>
 </head>
@@ -249,17 +195,11 @@ input:checked + .slider:before { transform: translateX(20px); }
 </div>
 
 
-<div class="modal-overlay order-detail-modal" id="orderModal">
-  <div class="modal-box" style="max-width:700px">
+<div class="modal-overlay" id="orderModal">
+  <div class="modal-box">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-      <div>
-        <h3 id="modalOrderNo" style="margin-bottom:4px">Order Details</h3>
-        <div id="modalOrderMeta" style="font-size:12px;color:var(--text3)"></div>
-      </div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <button class="btn-export green" onclick="printOrder()" title="Print Invoice"><i class="fa-solid fa-print"></i> Print</button>
-        <button class="btn-icon" onclick="closeOrderModal()"><i class="fa-solid fa-xmark"></i></button>
-      </div>
+      <h3 id="modalOrderNo">Order Details</h3>
+      <button class="btn-icon" onclick="closeOrderModal()"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div id="modalOrderBody"></div>
   </div>
@@ -385,7 +325,6 @@ input:checked + .slider:before { transform: translateX(20px); }
             </select>
           </div>
           <div class="form-group"><label>Selling Price (Rs.) *</label><input type="number" id="pf-price" step="0.01" min="0" required></div>
-          <div class="form-group"><label>Quantity in Stock</label><input type="number" id="pf-quantity" min="0" step="1" placeholder="0" value="0"></div>
           <div class="form-group"><label>Buy Price / Cost (Rs.)</label><input type="number" id="pf-buy-price" step="0.01" min="0" placeholder="Cost price for profit calc"></div>
           <div class="form-group"><label>Old Price (Rs.) — for discount badge</label><input type="number" id="pf-old-price" step="0.01" min="0"></div>
           <div class="form-group">
@@ -438,7 +377,6 @@ input:checked + .slider:before { transform: translateX(20px); }
               <th>Category</th>
               <th>Buy Price</th>
               <th>Sell Price</th>
-              <th style="text-align:center">Qty</th>
               <th>Featured</th>
               <th>Stock</th>
               <th>Actions</th>
@@ -528,81 +466,36 @@ input:checked + .slider:before { transform: translateX(20px); }
    
     <section id="tab-sales" class="tab-content">
       <div class="header-panel">
-        <div class="header-title"><h1>Sales History</h1><p>Real site ekalin apu orders okkomai danna pennawa.</p></div>
-        <div class="header-actions">
-          <button class="btn-export green" onclick="exportSalesCSV()"><i class="fa-solid fa-file-csv"></i> Export CSV</button>
-          <button class="btn-secondary" onclick="syncAll()"><i class="fa-solid fa-rotate"></i> Refresh</button>
-        </div>
+        <div class="header-title"><h1>Sales History</h1><p>All completed orders and POS invoices.</p></div>
       </div>
-
-      <!-- Summary stats -->
-      <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr));margin-bottom:24px" id="sales-stats-bar">
-        <div class="stat-card blue"><div class="stat-info"><h3>Total Orders</h3><p id="ss-total">0</p></div><div class="stat-icon"><i class="fa-solid fa-receipt"></i></div></div>
-        <div class="stat-card green"><div class="stat-info"><h3>Total Revenue</h3><p id="ss-revenue">Rs. 0</p></div><div class="stat-icon"><i class="fa-solid fa-money-bill-wave"></i></div></div>
-        <div class="stat-card orange"><div class="stat-info"><h3>Pending</h3><p id="ss-pending">0</p></div><div class="stat-icon"><i class="fa-solid fa-hourglass-half"></i></div></div>
-        <div class="stat-card green"><div class="stat-info"><h3>Delivered</h3><p id="ss-delivered">0</p></div><div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div></div>
-        <div class="stat-card red"><div class="stat-info"><h3>Cancelled</h3><p id="ss-cancelled">0</p></div><div class="stat-icon"><i class="fa-solid fa-ban"></i></div></div>
-      </div>
-
       <div class="table-container">
-        <div class="table-header" style="gap:14px;flex-wrap:wrap">
-          <h3 style="white-space:nowrap">Order Ledger</h3>
-          <div class="sales-filters" style="flex:1">
-            <div class="table-search" style="max-width:260px">
-              <i class="fa-solid fa-magnifying-glass"></i>
-              <input type="text" id="sales-search" placeholder="Search order / customer..." oninput="renderSalesTable()">
-            </div>
-            <select class="filter-select" id="sales-status-filter" onchange="renderSalesTable()">
-              <option value="">All Statuses</option>
-              <option value="pending">Pending</option>
-              <option value="confirmed">Confirmed</option>
-              <option value="packed">Packed</option>
-              <option value="shipped">Shipped</option>
-              <option value="delivered">Delivered</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
-            <select class="filter-select" id="sales-payment-filter" onchange="renderSalesTable()">
-              <option value="">All Payments</option>
-              <option value="cash_on_delivery">Cash on Delivery</option>
-              <option value="bank_transfer">Bank Transfer</option>
-              <option value="card">Card</option>
-            </select>
-          </div>
-          <span id="sales-count-label" style="color:var(--text3);font-size:12.5px;white-space:nowrap"></span>
+        <div class="table-header">
+          <h3>Order Ledger</h3>
+          <div class="table-search"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="sales-search" placeholder="Search by order or customer..." oninput="renderSalesTable()"></div>
         </div>
-        <div style="overflow-x:auto">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Order No</th>
-                <th>Date</th>
-                <th>Customer</th>
-                <th>Phone</th>
-                <th>Items</th>
-                <th>Subtotal</th>
-                <th>Discount</th>
-                <th>Total (Rs.)</th>
-                <th>Payment</th>
-                <th>Pay Status</th>
-                <th>Status</th>
-                <th>View</th>
-              </tr>
-            </thead>
-            <tbody id="sales-tbody"></tbody>
-          </table>
-        </div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Order No</th>
+              <th>Date</th>
+              <th>Customer</th>
+              <th>Items Qty</th>
+              <th>Total (Rs.)</th>
+              <th>Payment</th>
+              <th>Status</th>
+              <th>Detail</th>
+            </tr>
+          </thead>
+          <tbody id="sales-tbody"></tbody>
+        </table>
       </div>
     </section>
 
    
     <section id="tab-reports" class="tab-content">
       <div class="header-panel">
-        <div class="header-title"><h1>Business Reports</h1><p>Financial analytics, profit breakdown, saha monthly revenue.</p></div>
-        <div class="header-actions export-bar">
-          <button class="btn-export green" onclick="exportReportCSV()"><i class="fa-solid fa-file-csv"></i> Export CSV</button>
-          <button class="btn-export" onclick="printReport()"><i class="fa-solid fa-print"></i> Print</button>
-          <button class="btn-primary" onclick="loadReports()"><i class="fa-solid fa-rotate"></i> Refresh</button>
-        </div>
+        <div class="header-title"><h1>Business Reports</h1><p>Financial analytics and profit breakdown.</p></div>
+        <button class="btn-primary" onclick="loadReports()"><i class="fa-solid fa-rotate"></i> Refresh</button>
       </div>
       <div class="stats-grid" id="report-stats">
         <div class="stat-card green"><div class="stat-info"><h3>Gross Revenue</h3><p id="rep-gross">Rs. 0</p></div><div class="stat-icon"><i class="fa-solid fa-chart-line"></i></div></div>
@@ -611,42 +504,19 @@ input:checked + .slider:before { transform: translateX(20px); }
         <div class="stat-card orange"><div class="stat-info"><h3>Total Discounts</h3><p id="rep-discount">Rs. 0</p></div><div class="stat-icon"><i class="fa-solid fa-tag"></i></div></div>
         <div class="stat-card blue"><div class="stat-info"><h3>Total Orders</h3><p id="rep-orders">0</p></div><div class="stat-icon"><i class="fa-solid fa-receipt"></i></div></div>
       </div>
-
-      <!-- Charts row -->
-      <div class="charts-grid">
-        <div class="chart-container">
-          <h3><i class="fa-solid fa-chart-column" style="color:var(--blue);margin-right:8px"></i>Monthly Revenue (Last 6 Months)</h3>
-          <canvas id="chartMonthlyRevenue" height="220"></canvas>
-        </div>
-        <div class="chart-container">
-          <h3><i class="fa-solid fa-chart-pie" style="color:var(--purple);margin-right:8px"></i>Revenue vs Cost vs Profit</h3>
-          <canvas id="chartProfitBreakdown" height="220"></canvas>
-        </div>
-      </div>
-
-      <!-- Top products chart -->
-      <div class="chart-container" style="margin-bottom:28px">
-        <h3><i class="fa-solid fa-ranking-star" style="color:var(--orange);margin-right:8px"></i>Top Products – Revenue vs Profit</h3>
-        <canvas id="chartTopProducts" height="180"></canvas>
-      </div>
-
       <div class="table-container">
         <div class="table-header"><h3>Top Products by Revenue</h3></div>
-        <div style="overflow-x:auto">
-          <table class="data-table">
-            <thead><tr><th>#</th><th>Product</th><th>Brand</th><th>Units Sold</th><th>Revenue</th><th>Cost</th><th>Profit</th><th>Margin %</th></tr></thead>
-            <tbody id="report-top-tbody"></tbody>
-          </table>
-        </div>
+        <table class="data-table">
+          <thead><tr><th>Product</th><th>Brand</th><th>Units Sold</th><th>Revenue</th><th>Cost</th><th>Profit</th></tr></thead>
+          <tbody id="report-top-tbody"></tbody>
+        </table>
       </div>
       <div class="table-container">
-        <div class="table-header"><h3>Monthly Revenue – Last 6 Months</h3></div>
-        <div style="overflow-x:auto">
-          <table class="data-table">
-            <thead><tr><th>Month</th><th>Orders</th><th>Revenue</th><th>Avg Order Value</th></tr></thead>
-            <tbody id="report-monthly-tbody"></tbody>
-          </table>
-        </div>
+        <div class="table-header"><h3>Monthly Revenue (Last 6 Months)</h3></div>
+        <table class="data-table">
+          <thead><tr><th>Month</th><th>Orders</th><th>Revenue</th></tr></thead>
+          <tbody id="report-monthly-tbody"></tbody>
+        </table>
       </div>
     </section>
 
@@ -829,7 +699,6 @@ function switchTab(id) {
   document.getElementById('li-' + id)?.classList.add('active');
   closeSidebar();
   if (id === 'reports') loadReports();
-  if (id === 'sales') renderSalesTable();
 }
 function toggleSidebar() { document.querySelector('.sidebar').classList.toggle('mobile-open'); document.getElementById('sidebarOverlay').classList.toggle('open'); }
 function closeSidebar() { document.querySelector('.sidebar').classList.remove('mobile-open'); document.getElementById('sidebarOverlay').classList.remove('open'); }
@@ -1011,15 +880,11 @@ function renderProductsTable() {
   const tbody = document.getElementById('products-tbody');
   tbody.innerHTML = '';
   const filtered = products.filter(p => p.name.toLowerCase().includes(q) || (p.brand||'').toLowerCase().includes(q) || (p.category||'').toLowerCase().includes(q));
-  if (!filtered.length) { tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--text3)">No products found.</td></tr>`; return; }
+  if (!filtered.length) { tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--text3)">No products found.</td></tr>`; return; }
   filtered.forEach(p => {
     const img = p.img
       ? `<img src="${p.img}" style="width:38px;height:38px;object-fit:cover;border-radius:5px;border:1px solid var(--border)">`
       : `<div style="width:38px;height:38px;background:var(--bg4);border-radius:5px;display:flex;align-items:center;justify-content:center"><i class="fa-solid fa-image" style="color:var(--text3)"></i></div>`;
-    const qtyVal = p.quantity != null ? p.quantity : 0;
-    const qtyBadge = qtyVal > 0
-      ? `<span class="badge success">${qtyVal}</span>`
-      : `<span class="badge danger">0</span>`;
     tbody.innerHTML += `<tr>
       <td>${img}</td>
       <td><strong>${p.name}</strong></td>
@@ -1027,7 +892,6 @@ function renderProductsTable() {
       <td><span class="badge info">${p.category}</span></td>
       <td style="color:var(--text2)">${p.buyPrice != null ? 'Rs. ' + Number(p.buyPrice).toFixed(2) : '<span style="color:var(--text3)">—</span>'}</td>
       <td style="font-weight:600;color:var(--green)">Rs. ${Number(p.price).toFixed(2)}</td>
-      <td style="text-align:center">${qtyBadge}</td>
       <td>${p.featured ? '<span class="badge success">Yes</span>' : '<span style="color:var(--text3)">—</span>'}</td>
       <td>${p.stock ? '<span class="badge success">In Stock</span>' : '<span class="badge danger">Out</span>'}</td>
       <td>
@@ -1058,7 +922,6 @@ function openProductForm(p = null) {
   }
   document.getElementById('pf-category').value = p ? p.category : '';
   document.getElementById('pf-price').value = p ? p.price : '';
-  document.getElementById('pf-quantity').value = (p && p.quantity != null) ? p.quantity : 0;
   document.getElementById('pf-buy-price').value = (p && p.buyPrice != null) ? p.buyPrice : '';
   document.getElementById('pf-old-price').value = (p && p.oldPrice != null) ? p.oldPrice : '';
   document.getElementById('pf-img-url').value = p ? (p.img || '') : '';
@@ -1081,30 +944,13 @@ function closeProductForm() { document.getElementById('product-form-card').style
 function handleImgUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
-  if (!file.type.startsWith('image/')) { toast('Please select a PNG or JPG image.', 'danger'); return; }
-
   const reader = new FileReader();
   reader.onload = e => {
-    const img = new Image();
-    img.onload = () => {
-      // Resize to max 800px wide/tall, compress to JPEG quality 0.75
-      const MAX = 800;
-      let w = img.width, h = img.height;
-      if (w > MAX || h > MAX) {
-        if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
-        else { w = Math.round(w * MAX / h); h = MAX; }
-      }
-      const canvas = document.createElement('canvas');
-      canvas.width = w; canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      const b64 = canvas.toDataURL('image/jpeg', 0.75);
-      document.getElementById('pf-img-base64').value = b64;
-      document.getElementById('pf-img-url').value = '';
-      document.getElementById('pf-img-preview').src = b64;
-      document.getElementById('pf-img-preview-box').style.display = 'flex';
-      toast('Image loaded & compressed ✓', 'success');
-    };
-    img.src = e.target.result;
+    const b64 = e.target.result;
+    document.getElementById('pf-img-base64').value = b64;
+    document.getElementById('pf-img-url').value = '';
+    document.getElementById('pf-img-preview').src = b64;
+    document.getElementById('pf-img-preview-box').style.display = 'flex';
   };
   reader.readAsDataURL(file);
 }
@@ -1127,7 +973,6 @@ async function saveProduct() {
     brand: brandVal || null,
     category,
     price,
-    quantity: parseInt(document.getElementById('pf-quantity').value) || 0,
     buyPrice: buyPriceVal !== '' ? parseFloat(buyPriceVal) : null,
     oldPrice: oldPriceVal !== '' ? parseFloat(oldPriceVal) : null,
     img: imgB64 || imgUrl || '',
@@ -1296,63 +1141,26 @@ async function deleteUser(id) {
 // ── Sales History ──
 function renderSalesTable() {
   const q = (document.getElementById('sales-search')?.value || '').toLowerCase();
-  const statusF = document.getElementById('sales-status-filter')?.value || '';
-  const payF = document.getElementById('sales-payment-filter')?.value || '';
   const tbody = document.getElementById('sales-tbody');
   tbody.innerHTML = '';
-
-  let filtered = sales.filter(s =>
-    ((s.orderNumber||'').toLowerCase().includes(q) ||
-     (s.customerName||'').toLowerCase().includes(q) ||
-     (s.customerPhone||'').includes(q) ||
-     (s.customerEmail||'').toLowerCase().includes(q) ||
-     String(s.id||'').includes(q))
-    && (!statusF || s.status === statusF)
-    && (!payF || s.paymentMethod === payF)
+  const filtered = sales.filter(s =>
+    (s.orderNumber||'').toLowerCase().includes(q) ||
+    (s.customerName||'').toLowerCase().includes(q) ||
+    String(s.id||'').includes(q)
   );
-
-  // Update count label
-  const lbl = document.getElementById('sales-count-label');
-  if(lbl) lbl.textContent = `${filtered.length} orders found`;
-
-  // Update summary stats
-  const totalRev = filtered.reduce((a,s)=>a+Number(s.total||0),0);
-  const pending = filtered.filter(s=>s.status==='pending').length;
-  const delivered = filtered.filter(s=>s.status==='delivered').length;
-  const cancelled = filtered.filter(s=>s.status==='cancelled').length;
-  const ssT = document.getElementById('ss-total'); if(ssT) ssT.textContent = filtered.length;
-  const ssR = document.getElementById('ss-revenue'); if(ssR) ssR.textContent = 'Rs. '+totalRev.toLocaleString('en-US',{minimumFractionDigits:2});
-  const ssP = document.getElementById('ss-pending'); if(ssP) ssP.textContent = pending;
-  const ssD = document.getElementById('ss-delivered'); if(ssD) ssD.textContent = delivered;
-  const ssC = document.getElementById('ss-cancelled'); if(ssC) ssC.textContent = cancelled;
-
-  if (!filtered.length) { tbody.innerHTML = `<tr><td colspan="12" style="text-align:center;color:var(--text3);padding:24px">No orders found.</td></tr>`; return; }
-
+  if (!filtered.length) { tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--text3)">No orders found.</td></tr>`; return; }
   const statusMap = { pending:'info', confirmed:'info', packed:'orange', shipped:'orange', delivered:'success', cancelled:'danger' };
-  const payBadge = pm => pm === 'cash_on_delivery'
-    ? `<span class="badge info">COD</span>`
-    : pm === 'bank_transfer'
-      ? `<span class="badge purple">Bank</span>`
-      : `<span class="badge success">Card</span>`;
-
   [...filtered].reverse().forEach(s => {
-    const itemsQty = s.itemsCount || (Array.isArray(s.items) ? s.items.reduce((a,i)=>a+(i.quantity||i.qty||1),0) : '—');
-    const payStatusBadge = (s.paymentStatus||'pending') === 'paid'
-      ? `<span class="badge success">Paid</span>`
-      : `<span class="badge orange">${s.paymentStatus||'Pending'}</span>`;
+    const pmBadge = s.paymentMethod === 'cash_on_delivery' ? `<span class="badge info">COD</span>` : s.paymentMethod === 'bank_transfer' ? `<span class="badge purple">Bank</span>` : `<span class="badge success">Card</span>`;
     tbody.innerHTML += `<tr>
-      <td><strong style="color:var(--text)">${s.orderNumber || '#'+s.id}</strong></td>
-      <td style="color:var(--text3);font-size:12.5px">${fmtDate(s.createdAt)}</td>
-      <td><div style="font-weight:600">${s.customerName||'Guest'}</div><div style="font-size:11.5px;color:var(--text3)">${s.customerEmail||''}</div></td>
-      <td style="color:var(--text2)">${s.customerPhone||'—'}</td>
-      <td style="text-align:center"><strong>${itemsQty}</strong></td>
-      <td style="color:var(--text2)">Rs. ${Number(s.subtotal||s.total||0).toLocaleString('en-US',{minimumFractionDigits:2})}</td>
-      <td style="color:var(--red)">${Number(s.discount||0) > 0 ? '- Rs. '+Number(s.discount).toLocaleString('en-US',{minimumFractionDigits:2}) : '—'}</td>
-      <td style="color:var(--green);font-weight:700">Rs. ${Number(s.total||0).toLocaleString('en-US',{minimumFractionDigits:2})}</td>
-      <td>${payBadge(s.paymentMethod)}</td>
-      <td>${payStatusBadge}</td>
+      <td><strong>${s.orderNumber || '#'+s.id}</strong></td>
+      <td>${fmtDate(s.createdAt)}</td>
+      <td>${s.customerName || 'Guest'}</td>
+      <td style="text-align:center"><strong>${s.itemsCount || (Array.isArray(s.items) ? s.items.reduce((a,i)=>a+(i.quantity||i.qty||1),0) : '—')}</strong></td>
+      <td style="color:var(--green);font-weight:700">Rs. ${Number(s.total||0).toFixed(2)}</td>
+      <td>${pmBadge}</td>
       <td><span class="badge ${statusMap[s.status]||'info'}">${s.status||'pending'}</span></td>
-      <td><button class="btn-icon" title="View Full Details" onclick="viewOrder(${s.id})"><i class="fa-solid fa-eye"></i></button></td>
+      <td><button class="btn-icon" title="View" onclick="viewOrder(${s.id})"><i class="fa-solid fa-eye"></i></button></td>
     </tr>`;
   });
 }
@@ -1360,127 +1168,43 @@ function renderSalesTable() {
 function viewOrder(id) {
   const s = sales.find(x => x.id === id);
   if (!s) return;
-
-  const statusMap = { pending:'info', confirmed:'info', packed:'orange', shipped:'orange', delivered:'success', cancelled:'danger' };
-  const payBadge = pm => pm === 'cash_on_delivery' ? 'Cash on Delivery (COD)' : pm === 'bank_transfer' ? 'Bank Transfer' : pm === 'card' ? 'Card Payment' : pm || '—';
-
   document.getElementById('modalOrderNo').textContent = s.orderNumber || '#' + s.id;
-  document.getElementById('modalOrderMeta').textContent = `Placed on ${fmtDate(s.createdAt)}`;
-
   const items = Array.isArray(s.items) ? s.items : [];
-  const itemsHtml = items.length
-    ? items.map((i,idx) => `<tr style="${idx%2===1?'background:rgba(255,255,255,0.02)':''}">
-        <td>${i.name}</td>
-        <td style="text-align:center;font-weight:600">${i.quantity || i.qty || 1}</td>
-        <td style="color:var(--text2)">Rs. ${Number(i.price||0).toLocaleString('en-US',{minimumFractionDigits:2})}</td>
-        <td style="color:var(--green);font-weight:600;text-align:right">Rs. ${Number(i.subtotal||0).toLocaleString('en-US',{minimumFractionDigits:2})}</td>
-      </tr>`).join('')
-    : `<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:16px">No item details.</td></tr>`;
-
-  // Delivery info from order
-  const delivery = s.delivery || {};
-  const deliveryHtml = `
-    <div class="delivery-card">
-      <h4><i class="fa-solid fa-location-dot" style="color:var(--red);margin-right:6px"></i>Delivery Information</h4>
-      <div class="delivery-rows">
-        <div class="dr"><span>Recipient Name</span><span>${delivery.name || s.deliveryName || s.customerName || '—'}</span></div>
-        <div class="dr"><span>Phone</span><span>${delivery.phone || s.deliveryPhone || s.customerPhone || '—'}</span></div>
-        <div class="dr"><span>District</span><span>${delivery.district || s.deliveryDistrict || '—'}</span></div>
-        <div class="dr"><span>Address</span><span>${delivery.address || s.deliveryAddress || '—'}</span></div>
-        ${(delivery.notes || s.deliveryNotes) ? `<div class="dr" style="grid-column:1/-1"><span>Notes</span><span>${delivery.notes || s.deliveryNotes}</span></div>` : ''}
-      </div>
-    </div>`;
-
+  const itemsHtml = items.length ? items.map(i => `
+    <tr>
+      <td style="padding:8px 12px">${i.name}</td>
+      <td style="padding:8px 12px;text-align:center">${i.quantity || i.qty || 1}</td>
+      <td style="padding:8px 12px;color:var(--green)">Rs. ${Number(i.price||0).toFixed(2)}</td>
+      <td style="padding:8px 12px;color:var(--green);font-weight:600">Rs. ${Number(i.subtotal||0).toFixed(2)}</td>
+    </tr>`).join('') : `<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:12px">No item details.</td></tr>`;
   document.getElementById('modalOrderBody').innerHTML = `
-    <div class="order-detail-grid">
-      <div class="detail-row"><span class="detail-label">Customer</span><span class="detail-val">${s.customerName || 'Guest'}</span></div>
-      <div class="detail-row"><span class="detail-label">Email</span><span class="detail-val">${s.customerEmail || '—'}</span></div>
-      <div class="detail-row"><span class="detail-label">Phone</span><span class="detail-val">${s.customerPhone || '—'}</span></div>
-      <div class="detail-row"><span class="detail-label">Payment Method</span><span class="detail-val">${payBadge(s.paymentMethod)}</span></div>
-      <div class="detail-row"><span class="detail-label">Payment Status</span><span class="detail-val"><span class="badge ${(s.paymentStatus||'pending')==='paid'?'success':'orange'}">${s.paymentStatus||'pending'}</span></span></div>
-      <div class="detail-row"><span class="detail-label">Order Status</span><span class="detail-val"><span class="badge ${statusMap[s.status]||'info'}">${s.status||'pending'}</span></span></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;font-size:13px">
+      <div><span style="color:var(--text2)">Customer:</span> <strong>${s.customerName||'Guest'}</strong></div>
+      <div><span style="color:var(--text2)">Date:</span> ${fmtDate(s.createdAt)}</div>
+      <div><span style="color:var(--text2)">Payment:</span> ${s.paymentMethod||'—'}</div>
+      <div><span style="color:var(--text2)">Status:</span> ${s.status||'—'}</div>
+      <div><span style="color:var(--text2)">Phone:</span> ${s.customerPhone||'—'}</div>
+      <div><span style="color:var(--text2)">Email:</span> ${s.customerEmail||'—'}</div>
     </div>
-    ${deliveryHtml}
-    <table class="order-items-table">
-      <thead><tr><th>Product</th><th style="text-align:center">Qty</th><th>Unit Price</th><th style="text-align:right">Subtotal</th></tr></thead>
+    <table style="width:100%;border-collapse:collapse;background:var(--bg3);border-radius:8px;overflow:hidden;margin-bottom:16px">
+      <thead><tr style="background:var(--bg4)">
+        <th style="padding:8px 12px;font-size:12px;font-weight:600;color:var(--text2);text-align:left">Product</th>
+        <th style="padding:8px 12px;font-size:12px;font-weight:600;color:var(--text2);text-align:center">Qty</th>
+        <th style="padding:8px 12px;font-size:12px;font-weight:600;color:var(--text2)">Unit Price</th>
+        <th style="padding:8px 12px;font-size:12px;font-weight:600;color:var(--text2)">Subtotal</th>
+      </tr></thead>
       <tbody>${itemsHtml}</tbody>
     </table>
-    <div class="order-totals">
-      <div class="tot-row"><span class="tot-label">Subtotal:</span><span class="tot-val">Rs. ${Number(s.subtotal||s.total||0).toLocaleString('en-US',{minimumFractionDigits:2})}</span></div>
-      ${Number(s.discount||0)>0 ? `<div class="tot-row"><span class="tot-label">Discount:</span><span class="tot-val" style="color:var(--red)">- Rs. ${Number(s.discount).toLocaleString('en-US',{minimumFractionDigits:2})}</span></div>` : ''}
-      <div class="tot-row grand"><span class="tot-label">Total:</span><span class="tot-val">Rs. ${Number(s.total||0).toLocaleString('en-US',{minimumFractionDigits:2})}</span></div>
-    </div>
-    <div class="status-update-bar">
-      <span style="font-size:13px;color:var(--text2);white-space:nowrap"><i class="fa-solid fa-pen-to-square" style="margin-right:4px"></i>Update Status:</span>
-      <select id="statusSelectModal" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:9px 14px;border-radius:8px;font-size:13px;flex:1;min-width:140px;cursor:pointer">
-        <option value="pending" ${s.status==='pending'?'selected':''}>Pending</option>
-        <option value="confirmed" ${s.status==='confirmed'?'selected':''}>Confirmed</option>
-        <option value="packed" ${s.status==='packed'?'selected':''}>Packed</option>
-        <option value="shipped" ${s.status==='shipped'?'selected':''}>Shipped</option>
-        <option value="delivered" ${s.status==='delivered'?'selected':''}>Delivered</option>
-        <option value="cancelled" ${s.status==='cancelled'?'selected':''}>Cancelled</option>
-      </select>
-      <button class="btn-primary" style="white-space:nowrap" onclick="updateOrderStatus(${s.id})"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+    <div style="font-size:14px;display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+      <div>Subtotal: Rs. ${Number(s.subtotal||s.total||0).toFixed(2)}</div>
+      <div>Discount: Rs. ${Number(s.discount||0).toFixed(2)}</div>
+      <div style="font-size:17px;font-weight:700;color:var(--green)">Total: Rs. ${Number(s.total||0).toFixed(2)}</div>
     </div>`;
-
   document.getElementById('orderModal').classList.add('open');
 }
-
 function closeOrderModal() { document.getElementById('orderModal').classList.remove('open'); }
 
-async function updateOrderStatus(id) {
-  const sel = document.getElementById('statusSelectModal');
-  if (!sel) return;
-  const newStatus = sel.value;
-  try {
-    await api(`/api/admin/orders/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status: newStatus }) });
-    const idx = sales.findIndex(s => s.id === id);
-    if (idx !== -1) sales[idx].status = newStatus;
-    renderSalesTable();
-    closeOrderModal();
-    toast('Order status updated to ' + newStatus + '!', 'success');
-  } catch(e) { toast('Failed to update: ' + e.message, 'danger'); }
-}
-
-function printOrder() {
-  const body = document.getElementById('modalOrderBody')?.innerHTML || '';
-  const no = document.getElementById('modalOrderNo')?.textContent || 'Order';
-  const meta = document.getElementById('modalOrderMeta')?.textContent || '';
-  const win = window.open('', '_blank', 'width=700,height=900');
-  win.document.write(`<!DOCTYPE html><html><head><title>${no} - Thushan Motors</title>
-  <style>
-    body{font-family:Arial,sans-serif;color:#111;padding:30px;max-width:680px;margin:auto}
-    h2{color:#CC1111;margin-bottom:4px}
-    .order-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;font-size:13px}
-    .detail-label{color:#666;font-size:11px;text-transform:uppercase;font-weight:600}
-    .detail-val{font-size:13.5px;font-weight:500}
-    table{width:100%;border-collapse:collapse;margin:12px 0}
-    th{background:#f5f5f5;padding:8px 12px;font-size:12px;font-weight:600;text-align:left;border-bottom:2px solid #ddd}
-    td{padding:8px 12px;font-size:13px;border-bottom:1px solid #eee}
-    .delivery-card{background:#f9f9f9;padding:12px;border-radius:8px;margin:12px 0;border:1px solid #ddd}
-    .delivery-rows{display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px}
-    .dr span:first-child{color:#666;font-size:11px;display:block}
-    .order-totals{text-align:right;padding:10px;background:#f9f9f9;border-radius:8px}
-    .tot-row{display:flex;justify-content:flex-end;gap:20px;font-size:13px;margin:3px 0}
-    .grand{font-size:16px;font-weight:700;color:#00b074}
-    .badge{padding:3px 8px;border-radius:4px;font-size:11px;font-weight:600;display:inline-block;background:#e0e0e0}
-    .status-update-bar,.btn-icon,.btn-export{display:none}
-    h4{font-size:12px;text-transform:uppercase;color:#666;margin-bottom:8px}
-    @media print{body{padding:10px}}
-  </style></head><body>
-  <h2>Thushan Motors – Invoice</h2>
-  <p style="color:#666;font-size:13px;margin-bottom:20px">${no} &nbsp;|&nbsp; ${meta}</p>
-  ${body}
-  <p style="color:#999;font-size:11px;margin-top:24px;text-align:center">Thank you for shopping with Thushan Motors!</p>
-  </body></html>`);
-  win.document.close();
-  win.focus();
-  setTimeout(() => win.print(), 400);
-}
-
 // ── Reports ──
-let chartMonthly = null, chartProfit = null, chartTopProd = null;
-
 async function loadReports() {
   try {
     const data = await api('/api/admin/reports');
@@ -1490,163 +1214,38 @@ async function loadReports() {
     document.getElementById('rep-discount').textContent = 'Rs. ' + Number(data.totalDiscounts||0).toLocaleString('en-US',{minimumFractionDigits:2});
     document.getElementById('rep-orders').textContent = data.orderCount || 0;
 
+    // Profit color
     const profitEl = document.getElementById('rep-profit').closest('.stat-card');
     if (profitEl) profitEl.style.borderColor = Number(data.netProfit) < 0 ? 'var(--red)' : '';
 
-    // ── Top products table ──
+    // Top products
     const topBody = document.getElementById('report-top-tbody');
     topBody.innerHTML = '';
-    (data.topProducts || []).forEach((p, idx) => {
-      const margin = p.revenue > 0 ? ((p.profit / p.revenue) * 100).toFixed(1) : '0.0';
+    (data.topProducts || []).forEach(p => {
       topBody.innerHTML += `<tr>
-        <td style="color:var(--text3);font-weight:700">${idx+1}</td>
-        <td><strong>${p.name}</strong></td><td>${p.brand}</td>
-        <td style="text-align:center;font-weight:600">${p.unitsSold}</td>
-        <td style="color:var(--green)">Rs. ${Number(p.revenue).toLocaleString('en-US',{minimumFractionDigits:2})}</td>
-        <td style="color:var(--text2)">Rs. ${Number(p.cost).toLocaleString('en-US',{minimumFractionDigits:2})}</td>
-        <td style="color:${p.profit>=0?'var(--green)':'var(--red)'};font-weight:600">Rs. ${Number(p.profit).toLocaleString('en-US',{minimumFractionDigits:2})}</td>
-        <td><span class="badge ${Number(margin)>=30?'success':Number(margin)>=10?'orange':'danger'}">${margin}%</span></td>
+        <td>${p.name}</td><td>${p.brand}</td>
+        <td style="text-align:center">${p.unitsSold}</td>
+        <td style="color:var(--green)">Rs. ${Number(p.revenue).toFixed(2)}</td>
+        <td style="color:var(--text2)">Rs. ${Number(p.cost).toFixed(2)}</td>
+        <td style="color:${p.profit>=0?'var(--green)':'var(--red)'};font-weight:600">Rs. ${Number(p.profit).toFixed(2)}</td>
       </tr>`;
     });
-    if (!data.topProducts?.length) topBody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--text3)">No sales data yet.</td></tr>`;
+    if (!data.topProducts?.length) topBody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text3)">No sales data yet.</td></tr>`;
 
-    // ── Monthly table ──
+    // Monthly
     const mBody = document.getElementById('report-monthly-tbody');
     mBody.innerHTML = '';
     (data.monthly || []).forEach(m => {
-      const avg = m.orders > 0 ? (Number(m.revenue)/Number(m.orders)).toFixed(2) : '0.00';
       mBody.innerHTML += `<tr>
-        <td><strong>${m.month}</strong></td>
+        <td>${m.month}</td>
         <td style="text-align:center">${m.orders}</td>
-        <td style="color:var(--green)">Rs. ${Number(m.revenue).toLocaleString('en-US',{minimumFractionDigits:2})}</td>
-        <td style="color:var(--text2)">Rs. ${Number(avg).toLocaleString('en-US',{minimumFractionDigits:2})}</td>
+        <td style="color:var(--green)">Rs. ${Number(m.revenue).toFixed(2)}</td>
       </tr>`;
     });
-    if (!data.monthly?.length) mBody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--text3)">No data.</td></tr>`;
-
-    // Store for export
-    window._reportData = data;
-
-    // ── Charts ──
-    buildMonthlyChart(data.monthly || []);
-    buildProfitChart(data);
-    buildTopProductsChart(data.topProducts || []);
-
+    if (!data.monthly?.length) mBody.innerHTML = `<tr><td colspan="3" style="text-align:center;color:var(--text3)">No data.</td></tr>`;
   } catch(e) {
     toast('Could not load reports: ' + e.message, 'danger');
   }
-}
-
-function buildMonthlyChart(monthly) {
-  const ctx = document.getElementById('chartMonthlyRevenue');
-  if (!ctx) return;
-  if (chartMonthly) chartMonthly.destroy();
-  chartMonthly = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: monthly.map(m => m.month),
-      datasets: [
-        { label: 'Revenue (Rs.)', data: monthly.map(m => Number(m.revenue)), backgroundColor: 'rgba(0,176,116,0.7)', borderColor: '#00b074', borderWidth: 1.5, borderRadius: 6 },
-        { label: 'Orders', data: monthly.map(m => Number(m.orders)), type: 'line', yAxisID: 'y2', borderColor: '#0070f3', backgroundColor: 'rgba(0,112,243,0.15)', pointBackgroundColor: '#0070f3', tension: 0.3, fill: true }
-      ]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      scales: {
-        y: { ticks: { color: '#9aa3be', callback: v => 'Rs.'+Number(v).toLocaleString() }, grid: { color: '#2a2f4a' } },
-        y2: { position: 'right', ticks: { color: '#0070f3' }, grid: { display: false } },
-        x: { ticks: { color: '#9aa3be' }, grid: { color: '#2a2f4a' } }
-      },
-      plugins: { legend: { labels: { color: '#e8ecf4', font: { size: 12 } } } }
-    }
-  });
-}
-
-function buildProfitChart(data) {
-  const ctx = document.getElementById('chartProfitBreakdown');
-  if (!ctx) return;
-  if (chartProfit) chartProfit.destroy();
-  const gross = Number(data.grossRevenue||0);
-  const cost = Number(data.totalCost||0);
-  const profit = Number(data.netProfit||0);
-  const discount = Number(data.totalDiscounts||0);
-  chartProfit = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels: ['Net Profit', 'Total Cost', 'Discounts Given'],
-      datasets: [{ data: [Math.max(0,profit), cost, discount], backgroundColor: ['rgba(0,176,116,0.8)', 'rgba(204,17,17,0.8)', 'rgba(245,166,35,0.8)'], borderColor: ['#00b074','#CC1111','#f5a623'], borderWidth: 2, hoverOffset: 6 }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { labels: { color: '#e8ecf4', font: { size: 12 } }, position: 'bottom' },
-        tooltip: { callbacks: { label: ctx => ` Rs. ${Number(ctx.parsed).toLocaleString('en-US',{minimumFractionDigits:2})}` } }
-      }
-    }
-  });
-}
-
-function buildTopProductsChart(topProducts) {
-  const ctx = document.getElementById('chartTopProducts');
-  if (!ctx) return;
-  if (chartTopProd) chartTopProd.destroy();
-  if (!topProducts.length) return;
-  chartTopProd = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: topProducts.map(p => p.name.length > 20 ? p.name.substring(0,20)+'…' : p.name),
-      datasets: [
-        { label: 'Revenue', data: topProducts.map(p => p.revenue), backgroundColor: 'rgba(0,176,116,0.7)', borderRadius: 6 },
-        { label: 'Profit', data: topProducts.map(p => p.profit), backgroundColor: 'rgba(121,40,202,0.7)', borderRadius: 6 }
-      ]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false, indexAxis: 'y',
-      scales: {
-        x: { ticks: { color: '#9aa3be', callback: v => 'Rs.'+Number(v).toLocaleString() }, grid: { color: '#2a2f4a' } },
-        y: { ticks: { color: '#e8ecf4' }, grid: { color: '#2a2f4a' } }
-      },
-      plugins: { legend: { labels: { color: '#e8ecf4', font: { size: 12 } } } }
-    }
-  });
-}
-
-function exportReportCSV() {
-  const data = window._reportData;
-  if (!data) { toast('Reports load karanna.', 'danger'); return; }
-  let csv = 'Thushan Motors – Business Report\n\n';
-  csv += 'SUMMARY\n';
-  csv += `Gross Revenue,Rs. ${Number(data.grossRevenue||0).toFixed(2)}\n`;
-  csv += `Total Cost,Rs. ${Number(data.totalCost||0).toFixed(2)}\n`;
-  csv += `Net Profit,Rs. ${Number(data.netProfit||0).toFixed(2)}\n`;
-  csv += `Total Discounts,Rs. ${Number(data.totalDiscounts||0).toFixed(2)}\n`;
-  csv += `Total Orders,${data.orderCount||0}\n\n`;
-  csv += 'TOP PRODUCTS\nName,Brand,Units Sold,Revenue,Cost,Profit\n';
-  (data.topProducts||[]).forEach(p => {
-    csv += `"${p.name}","${p.brand}",${p.unitsSold},${Number(p.revenue).toFixed(2)},${Number(p.cost).toFixed(2)},${Number(p.profit).toFixed(2)}\n`;
-  });
-  csv += '\nMONTHLY REVENUE\nMonth,Orders,Revenue\n';
-  (data.monthly||[]).forEach(m => { csv += `${m.month},${m.orders},${Number(m.revenue).toFixed(2)}\n`; });
-  dlCSV(csv, `TM_Report_${new Date().toISOString().slice(0,10)}.csv`);
-}
-
-function exportSalesCSV() {
-  let csv = 'Thushan Motors – Sales History\nOrder No,Date,Customer,Email,Phone,Items,Subtotal,Discount,Total,Payment,Status\n';
-  sales.forEach(s => {
-    const qty = s.itemsCount || (Array.isArray(s.items) ? s.items.reduce((a,i)=>a+(i.quantity||1),0) : 0);
-    csv += `"${s.orderNumber||s.id}","${fmtDate(s.createdAt)}","${s.customerName||''}","${s.customerEmail||''}","${s.customerPhone||''}",${qty},${Number(s.subtotal||s.total||0).toFixed(2)},${Number(s.discount||0).toFixed(2)},${Number(s.total||0).toFixed(2)},"${s.paymentMethod||''}","${s.status||''}"\n`;
-  });
-  dlCSV(csv, `TM_Sales_${new Date().toISOString().slice(0,10)}.csv`);
-}
-
-function dlCSV(content, filename) {
-  const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click();
-  toast('CSV export downloaded!', 'success');
-}
-
-function printReport() {
-  window.print();
 }
 
 // ── Messages ──
