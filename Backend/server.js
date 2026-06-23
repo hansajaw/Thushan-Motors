@@ -615,37 +615,37 @@ app.get('/api/auth/me', requireAuth, (req, res) => {
 });
 
 app.post('/api/orders', requireAuth, asyncHandler(async (req, res) => {
-  const {
-    customerName,
-    customerPhone,
-    deliveryName,
-    deliveryPhone,
-    deliveryAddress,
-    deliveryDistrict,
-    deliveryNotes,
-    paymentMethod = 'cash_on_delivery',
-    items = [],
-    subtotal,
-    discount = 0,
-    total
-  } = req.body;
-
-  const finalDeliveryName = String(deliveryName || customerName || req.user.name || '').trim();
-  const finalDeliveryPhone = String(deliveryPhone || customerPhone || req.user.phone || '').trim();
-  const finalDeliveryAddress = String(deliveryAddress || '').trim();
-  const finalDeliveryDistrict = String(deliveryDistrict || 'Not specified').trim();
-  const finalDeliveryNotes = String(deliveryNotes || '').trim();
-
-  if (!finalDeliveryName || !finalDeliveryPhone || !finalDeliveryAddress) {
-    return res.status(400).json({
-      message: 'Name, phone number and delivery address are required.'
-    });
-  }
+  const { items = [], delivery = {}, paymentMethod = 'cash_on_delivery' } = req.body;
 
   if (!Array.isArray(items) || items.length === 0) {
-    return res.status(400).json({
-      message: 'Order must contain at least one product.'
-    });
+    return res.status(400).json({ message: 'Order items are required.' });
+  }
+
+  const allowedPaymentMethods = ['cash_on_delivery', 'bank_transfer', 'card'];
+  if (!allowedPaymentMethods.includes(paymentMethod)) {
+    return res.status(400).json({ message: 'Please select a valid payment method.' });
+  }
+
+  const deliveryName = String(delivery.name || '').trim();
+  const deliveryPhone = String(delivery.phone || '').trim();
+  const deliveryAddress = String(delivery.address || '').trim();
+  const deliveryDistrict = String(delivery.district || '').trim();
+  const deliveryNotes = String(delivery.notes || '').trim();
+
+  if (!deliveryName) return res.status(400).json({ message: 'Delivery name is required.' });
+  if (!deliveryPhone) return res.status(400).json({ message: 'Delivery phone number is required.' });
+  if (!/^[0-9+\-\s()]{7,20}$/.test(deliveryPhone)) return res.status(400).json({ message: 'Please enter a valid phone number.' });
+  if (!deliveryAddress) return res.status(400).json({ message: 'Delivery address is required.' });
+  if (!deliveryDistrict) return res.status(400).json({ message: 'Delivery district or city is required.' });
+
+  if (paymentMethod === 'card') {
+    const payment = req.body.payment || {};
+    const cardName = String(payment.cardName || '').trim();
+    const cardLast4 = String(payment.cardLast4 || '').trim();
+    const expiry = String(payment.expiry || '').trim();
+    if (!cardName) return res.status(400).json({ message: 'Card name is required.' });
+    if (!/^\d{4}$/.test(cardLast4)) return res.status(400).json({ message: 'Card last 4 digits are required.' });
+    if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(expiry)) return res.status(400).json({ message: 'Card expiry must be in MM/YY format.' });
   }
 
   const pool = getPool();
@@ -655,146 +655,70 @@ app.post('/api/orders', requireAuth, asyncHandler(async (req, res) => {
     await connection.beginTransaction();
 
     const orderItems = [];
-    let calculatedSubtotal = 0;
+    let total = 0;
 
     for (const line of items) {
       const productId = Number(line.productId || line.id);
       const quantity = Math.max(1, Number(line.quantity || line.qty || 1));
 
-      if (!productId) {
-        await connection.rollback();
-        return res.status(400).json({ message: 'Invalid product in cart.' });
-      }
-
-      const [productRows] = await connection.query(
-        'SELECT * FROM products WHERE id = ? FOR UPDATE',
-        [productId]
-      );
-
+      const [productRows] = await connection.query('SELECT * FROM products WHERE id = ? FOR UPDATE', [productId]);
       const product = productRows[0];
 
       if (!product) {
         await connection.rollback();
         return res.status(400).json({ message: `Product ${productId} not found.` });
       }
-
       if (!product.stock) {
         await connection.rollback();
         return res.status(400).json({ message: `${product.name} is out of stock.` });
       }
 
       const price = Number(product.price);
-      const lineSubtotal = price * quantity;
+      const subtotal = price * quantity;
+      total += subtotal;
 
-      calculatedSubtotal += lineSubtotal;
-
-      orderItems.push({
-        productId: product.id,
-        name: product.name,
-        price,
-        quantity,
-        subtotal: lineSubtotal
-      });
+      orderItems.push({ productId: product.id, name: product.name, price, quantity, subtotal });
     }
-
-    const finalSubtotal = Number(subtotal || calculatedSubtotal);
-    const finalDiscount = Number(discount || 0);
-    const finalTotal = Number(total || finalSubtotal - finalDiscount);
-
-    const tempOrderNo = `T${Date.now().toString().slice(-12)}`;
 
     const [orderResult] = await connection.query(
       `INSERT INTO orders
-        (
-          order_no,
-          user_id,
-          subtotal,
-          discount,
-          total,
-          delivery_name,
-          delivery_phone,
-          delivery_address,
-          delivery_district,
-          delivery_notes,
-          payment_method,
-          payment_status,
-          status
-        )
+        (order_no, user_id, subtotal, discount, total, delivery_name, delivery_phone, delivery_address, delivery_district, delivery_notes, payment_method, payment_status, status)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        tempOrderNo,
+        '',
         req.user.id,
-        finalSubtotal,
-        finalDiscount,
-        finalTotal,
-        finalDeliveryName,
-        finalDeliveryPhone,
-        finalDeliveryAddress,
-        finalDeliveryDistrict,
-        finalDeliveryNotes,
+        total,   // subtotal = item total (no discount on customer checkout)
+        0,       // discount = 0 for customer checkout
+        total,
+        deliveryName,
+        deliveryPhone,
+        deliveryAddress,
+        deliveryDistrict,
+        deliveryNotes,
         paymentMethod,
-        'pending',
+        paymentMethod === 'cash_on_delivery' ? 'pending' : 'unpaid',
         'pending'
       ]
     );
 
     const orderId = orderResult.insertId;
-    const finalOrderNo = orderNumber(orderId);
-
-    await connection.query(
-      'UPDATE orders SET order_no = ? WHERE id = ?',
-      [finalOrderNo, orderId]
-    );
+    const orderNo = orderNumber(orderId);
+    await connection.query('UPDATE orders SET order_no = ? WHERE id = ?', [orderNo, orderId]);
 
     for (const item of orderItems) {
       await connection.query(
-        `INSERT INTO order_items
-          (
-            order_id,
-            product_id,
-            name,
-            price,
-            quantity,
-            subtotal
-          )
-         VALUES (?, ?, ?, ?, ?, ?)`,
-        [
-          orderId,
-          item.productId,
-          item.name,
-          item.price,
-          item.quantity,
-          item.subtotal
-        ]
+        'INSERT INTO order_items (order_id, product_id, name, price, quantity, subtotal) VALUES (?, ?, ?, ?, ?, ?)',
+        [orderId, item.productId, item.name, item.price, item.quantity, item.subtotal]
       );
     }
 
     await connection.commit();
 
-    res.status(201).json({
-      message: 'Order saved successfully.',
-      order: {
-        id: orderId,
-        orderNo: finalOrderNo,
-        customerName: finalDeliveryName,
-        customerPhone: finalDeliveryPhone,
-        deliveryAddress: finalDeliveryAddress,
-        deliveryDistrict: finalDeliveryDistrict,
-        deliveryNotes: finalDeliveryNotes,
-        paymentMethod,
-        subtotal: finalSubtotal,
-        discount: finalDiscount,
-        total: finalTotal,
-        status: 'pending',
-        items: orderItems
-      }
-    });
+    const [orderRows] = await pool.query('SELECT * FROM orders WHERE id = ?', [orderId]);
+    res.status(201).json(mapOrder(orderRows[0], orderItems, cleanUser(req.user)));
   } catch (err) {
     await connection.rollback();
-    console.error('Order save error:', err);
-    res.status(500).json({
-      message: 'Could not save order.',
-    });
+    throw err;
   } finally {
     connection.release();
   }
@@ -1310,29 +1234,22 @@ app.get('/api/admin/sales', requireAdmin, asyncHandler(async (req, res) => {
       subtotal: Number(i.subtotal || 0)
     }));
     const totalQty = orderItems.reduce((s, i) => s + i.quantity, 0);
-      return {
-        id: o.id,
-        orderNumber: o.order_no || `TM-${String(o.id).padStart(5, '0')}`,
-        customerName: o.delivery_name || o.customer_name,
-        customerEmail: o.customer_email,
-        customerPhone: o.delivery_phone || o.customer_phone || '',
-
-        deliveryName: o.delivery_name || '',
-        deliveryPhone: o.delivery_phone || '',
-        deliveryAddress: o.delivery_address || '',
-        deliveryDistrict: o.delivery_district || '',
-        deliveryNotes: o.delivery_notes || '',
-
-        status: o.status,
-        subtotal: Number(o.subtotal || o.total),
-        discount: Number(o.discount || 0),
-        total: Number(o.total),
-        paymentMethod: o.payment_method,
-        paymentStatus: o.payment_status,
-        createdAt: o.created_at,
-        itemsCount: totalQty,
-        items: orderItems
-      };
+    return {
+      id: o.id,
+      orderNumber: `TM-${String(o.id).padStart(5, '0')}`,
+      customerName: o.customer_name,
+      customerEmail: o.customer_email,
+      customerPhone: o.customer_phone || '',
+      status: o.status,
+      subtotal: Number(o.subtotal || o.total),
+      discount: Number(o.discount || 0),
+      total: Number(o.total),
+      paymentMethod: o.payment_method,
+      paymentStatus: o.payment_status,
+      createdAt: o.created_at,
+      itemsCount: totalQty,
+      items: orderItems
+    };
   }));
 }));
 
