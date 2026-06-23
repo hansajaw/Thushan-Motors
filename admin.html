@@ -415,94 +415,45 @@ input:checked + .slider:before { transform: translateX(20px); }
         </table>
       </div>
     </section>
+
+   
     <section id="tab-customers" class="tab-content">
       <div class="header-panel">
-        <div class="header-title">
-          <h1>Customers</h1>
-          <p>Registered customer accounts from the storefront.</p>
-        </div>
-        <button class="btn-primary" onclick="openCustomerForm()">
-          <i class="fa-solid fa-user-plus"></i> Add Customer
-        </button>
+        <div class="header-title"><h1>Customers</h1><p>Registered customer accounts from the storefront.</p></div>
       </div>
-
-      <div class="table-container" id="customer-form-card" style="display:none;padding:24px">
-        <h3 style="margin-bottom:18px" id="customer-form-title">Add Customer</h3>
-
-        <div class="form-grid">
-          <div class="form-group">
-            <label>Customer Name *</label>
-            <input type="text" id="cf-name">
-          </div>
-
-          <div class="form-group">
-            <label>Phone</label>
-            <input type="text" id="cf-phone">
-          </div>
-
-          <div class="form-group">
-            <label>Email</label>
-            <input type="email" id="cf-email">
-          </div>
-        </div>
-
-        <input type="hidden" id="cf-edit-id">
-
-        <div style="display:flex;gap:10px;justify-content:flex-end">
-          <button class="btn-secondary" onclick="closeCustomerForm()">Cancel</button>
-          <button class="btn-primary" onclick="saveCustomer()">
-            <i class="fa-solid fa-floppy-disk"></i> Save Customer
-          </button>
-        </div>
-      </div>
-
       <div class="table-container">
         <div class="table-header">
           <h3>Customer List</h3>
-          <div class="table-search">
-            <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" id="cust-search" placeholder="Search customers..." oninput="renderCustomersTable()">
-          </div>
+          <div class="table-search"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="cust-search" placeholder="Search customers..." oninput="renderCustomersTable()"></div>
         </div>
         <table class="data-table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Name</th>
-              <th>Phone</th>
-              <th>Email</th>
-              <th>Registered</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
+          <thead><tr><th>#</th><th>Name</th><th>Phone</th><th>Email</th><th>Registered</th><th>Actions</th></tr></thead>
           <tbody id="customers-tbody"></tbody>
         </table>
       </div>
     </section>
+
+   
     <section id="tab-users" class="tab-content">
       <div class="header-panel">
         <div class="header-title"><h1>System Users</h1><p>Admin and staff accounts.</p></div>
         <button class="btn-primary" onclick="openUserForm()"><i class="fa-solid fa-user-shield"></i> Add User</button>
       </div>
-
       <div class="table-container" id="user-form-card" style="display:none;padding:24px">
-        <h3 style="margin-bottom:18px" id="user-form-title">Add User</h3>
+        <h3 style="margin-bottom:18px">Add Admin User</h3>
         <div class="form-grid">
           <div class="form-group"><label>Full Name *</label><input type="text" id="uf-name" required></div>
           <div class="form-group"><label>Email *</label><input type="email" id="uf-email" required></div>
-          <div class="form-group"><label>Phone</label><input type="text" id="uf-phone"></div>
-          <div class="form-group"><label>Password <span style="color:var(--text3)">(leave blank when editing)</span></label><input type="password" id="uf-password"></div>
+          <div class="form-group"><label>Password *</label><input type="password" id="uf-password" required></div>
           <div class="form-group"><label>Role</label>
             <select id="uf-role"><option value="admin">Admin</option><option value="customer">Customer</option></select>
           </div>
         </div>
-        <input type="hidden" id="uf-edit-id">
         <div style="display:flex;gap:10px;justify-content:flex-end">
           <button class="btn-secondary" onclick="closeUserForm()">Cancel</button>
           <button class="btn-primary" onclick="saveUser()"><i class="fa-solid fa-floppy-disk"></i> Save</button>
         </div>
       </div>
-
       <div class="table-container">
         <div class="table-header"><h3>All Users</h3></div>
         <table class="data-table">
@@ -511,7 +462,6 @@ input:checked + .slider:before { transform: translateX(20px); }
         </table>
       </div>
     </section>
-
 
    
     <section id="tab-sales" class="tab-content">
@@ -592,22 +542,42 @@ input:checked + .slider:before { transform: translateX(20px); }
 
 let products = [], suppliers = [], customers = [], users = [], sales = [], messages = [];
 let posCart = [];
-let authToken = localStorage.getItem('tm_auth_token') || '';
+
+/* Admin token */
+let authToken =
+  localStorage.getItem('tm_auth_token') ||
+  localStorage.getItem('thushanAdminToken') ||
+  localStorage.getItem('thushanUserToken') ||
+  '';
 
 /* Backend API URL */
 // Auto-detect: local dev uses same origin (localhost:3000), production uses Vercel URL
-const ADMIN_API_BASE = 'https://thushan-motors.vercel.app';
+const ADMIN_API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+  ? `http://${window.location.host}`
+  : 'https://thushan-motors.vercel.app';
 
 // ── Toast ──
 function toast(msg, type = 'success') {
   const box = document.getElementById('toastBox');
   const el = document.createElement('div');
+
   el.className = `toast ${type}`;
-  const icon = type === 'success' ? 'fa-circle-check' : type === 'info' ? 'fa-circle-info' : 'fa-circle-exclamation';
+
+  const icon = type === 'success'
+    ? 'fa-circle-check'
+    : type === 'info'
+      ? 'fa-circle-info'
+      : 'fa-circle-exclamation';
+
   el.innerHTML = `<i class="fa-solid ${icon}"></i><span>${msg}</span>`;
   box.appendChild(el);
+
   setTimeout(() => el.classList.add('show'), 50);
-  setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 400); }, 4000);
+
+  setTimeout(() => {
+    el.classList.remove('show');
+    setTimeout(() => el.remove(), 400);
+  }, 4000);
 }
 
 // ── API helper ──
@@ -651,27 +621,56 @@ async function api(path, opts = {}) {
 }
 
 // ── Auth ──
-function showLogin() { document.getElementById('loginOverlay').style.display = 'flex'; }
-function hideLogin() { document.getElementById('loginOverlay').style.display = 'none'; }
+function showLogin() {
+  document.getElementById('loginOverlay').style.display = 'flex';
+}
+
+function hideLogin() {
+  document.getElementById('loginOverlay').style.display = 'none';
+}
 
 async function doLogin() {
   const email = document.getElementById('loginEmail').value.trim();
   const pass = document.getElementById('loginPassword').value;
   const errEl = document.getElementById('loginError');
+
   errEl.style.display = 'none';
+  errEl.textContent = '';
+
+  if (!email || !pass) {
+    errEl.textContent = 'Please enter admin email and password.';
+    errEl.style.display = 'block';
+    return;
+  }
+
   try {
-    const data = await api('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password: pass }) });
-    if (data.user && data.user.role !== 'admin') {
+    const data = await api('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({
+        email: email,
+        password: pass
+      })
+    });
+
+    if (!data.user || data.user.role !== 'admin') {
       errEl.textContent = 'This account does not have admin access.';
       errEl.style.display = 'block';
       return;
     }
+
     authToken = data.token;
-    localStorage.setItem('tm_auth_token', authToken);
+
+    localStorage.setItem('tm_auth_token', data.token);
+    localStorage.setItem('thushanAdminToken', data.token);
+    localStorage.setItem('thushanUserToken', data.token);
+    localStorage.setItem('tm_current_user', JSON.stringify(data.user));
+
     hideLogin();
-    toast('Login successful!', 'success');
-    syncAll();
-  } catch(e) {
+
+    toast('Admin login successful!', 'success');
+
+    await syncAll();
+  } catch (e) {
     errEl.textContent = e.message || 'Login failed.';
     errEl.style.display = 'block';
   }
@@ -679,9 +678,17 @@ async function doLogin() {
 
 function adminLogout() {
   authToken = '';
+
   localStorage.removeItem('tm_auth_token');
+  localStorage.removeItem('thushanAdminToken');
+  localStorage.removeItem('thushanUserToken');
+  localStorage.removeItem('tm_current_user');
+
   toast('Logged out.', 'info');
-  setTimeout(() => { showLogin(); }, 600);
+
+  setTimeout(() => {
+    showLogin();
+  }, 600);
 }
 
 // ── Nav ──
@@ -764,10 +771,10 @@ function renderDashboard() {
 // ── POS ──
 function fillPosCustomers() {
   const sel = document.getElementById('pos-customer');
-  sel.innerHTML = '<option value="Walk-In">Walk-In Customer</option>';
+  sel.innerHTML = '<option value="walk-in">Walk-In Customer</option>';
   customers.forEach(c => {
     const opt = document.createElement('option');
-    opt.value = c.name;
+    opt.value = c.id;          // use numeric ID so /api/admin/orders gets customerId
     opt.textContent = `${c.name} (${c.phone || c.email || ''})`;
     sel.appendChild(opt);
   });
@@ -835,41 +842,49 @@ function removeFromCart(idx) { posCart.splice(idx, 1); updateCartTotals(); }
 
 async function checkoutPOS() {
   if (!posCart.length) { toast('Cart is empty.', 'danger'); return; }
-  let sub = posCart.reduce((s, i) => s + Number(i.price) * i.qty, 0);
-  const disc = parseFloat(document.getElementById('pos-discount').value) || 0;
-  const discAmt = sub * disc / 100;
-  const grand = sub - discAmt;
-  const custName = document.getElementById('pos-customer').value;
 
-  // Build order payload for existing user or walk-in
-  // For POS we POST to /api/admin/sales directly
+  const disc = parseFloat(document.getElementById('pos-discount').value) || 0;
+  const custVal = document.getElementById('pos-customer').value;
+
+  let customerId = null;
+
+  if (custVal === 'walk-in') {
+    // Auto-create a walk-in customer record so /api/admin/orders gets a valid user_id
+    try {
+      const walkin = await api('/api/admin/customers', {
+        method: 'POST',
+        body: JSON.stringify({ name: 'Walk-In Customer' })
+      });
+      customerId = walkin.id;
+    } catch(e) {
+      toast('Could not create walk-in customer: ' + e.message, 'danger');
+      return;
+    }
+  } else {
+    customerId = Number(custVal);
+    if (!customerId) { toast('Please select a customer.', 'danger'); return; }
+  }
+
   const payload = {
-    customerName: custName,
-    itemsCount: posCart.reduce((s, i) => s + i.qty, 0),
-    total: grand,
-    subtotal: sub,
-    discount: discAmt,
-    date: new Date().toISOString(),
-    items: posCart.map(i => ({ productId: i.id, name: i.name, price: i.price, quantity: i.qty, subtotal: Number(i.price)*i.qty }))
+    customerId,
+    discount: disc,
+    paymentMethod: 'cash_on_delivery',
+    items: posCart.map(i => ({ productId: i.id, quantity: i.qty }))
   };
 
   try {
-    try {
-      await api('/api/admin/sales', { method: 'POST', body: JSON.stringify(payload) });
-      toast('Invoice saved!', 'success');
-    } catch(e) {
-      toast('Saved locally (offline mode).', 'info');
-    }
-
-    posCart = [];
-    document.getElementById('pos-discount').value = '0';
-    updateCartTotals();
-
-    await syncAll();
-    switchTab('sales');
+    await api('/api/admin/orders', { method: 'POST', body: JSON.stringify(payload) });
+    toast('Invoice saved successfully!', 'success');
   } catch(e) {
-    toast('POS sale failed: ' + e.message, 'danger');
+    toast('Checkout failed: ' + (e.message || 'Unknown error'), 'danger');
+    return;
   }
+
+  posCart = [];
+  document.getElementById('pos-discount').value = '0';
+  updateCartTotals();
+  await syncAll();
+  switchTab('sales');
 }
 
 // ── Products ──
@@ -1091,131 +1106,49 @@ function renderCustomersTable() {
 function renderUsersTable() {
   const tbody = document.getElementById('users-tbody');
   tbody.innerHTML = '';
-
-  if (!users.length) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text3)">No users.</td></tr>`;
-    return;
-  }
-
+  if (!users.length) { tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text3)">No users.</td></tr>`; return; }
   users.forEach((u, i) => {
-    const roleBadge = u.role === 'admin'
-      ? `<span class="badge purple">Admin</span>`
-      : `<span class="badge info">Customer</span>`;
-
-    const verBadge = u.emailVerified
-      ? `<span class="badge success">Yes</span>`
-      : `<span class="badge danger">No</span>`;
-
+    const roleBadge = u.role === 'admin' ? `<span class="badge purple">Admin</span>` : `<span class="badge info">Customer</span>`;
+    const verBadge = u.emailVerified ? `<span class="badge success">Yes</span>` : `<span class="badge danger">No</span>`;
     tbody.innerHTML += `<tr>
-      <td><strong>#${u.id || i + 1}</strong></td>
-      <td>${u.name || '—'}</td>
-      <td>${u.email || '—'}</td>
+      <td><strong>#${u.id || i+1}</strong></td>
+      <td>${u.name}</td>
+      <td>${u.email}</td>
       <td>${roleBadge}</td>
       <td>${verBadge}</td>
       <td>${fmtDate(u.createdAt)}</td>
-      <td>
-        <div class="actions-cell">
-          <button class="btn-icon" title="Edit" onclick="editUserById(${u.id})">
-            <i class="fa-solid fa-pen-to-square"></i>
-          </button>
-          <button class="btn-icon delete" title="Delete" onclick="deleteUser(${u.id})">
-            <i class="fa-solid fa-user-lock"></i>
-          </button>
-        </div>
-      </td>
+      <td><button class="btn-icon delete" onclick="deleteUser(${u.id})"><i class="fa-solid fa-user-lock"></i></button></td>
     </tr>`;
   });
 }
-
-function openUserForm(u = null) {
-  document.getElementById('uf-edit-id').value = u ? u.id : '';
-  document.getElementById('uf-name').value = u ? u.name || '' : '';
-  document.getElementById('uf-email').value = u ? u.email || '' : '';
-  document.getElementById('uf-phone').value = u ? u.phone || '' : '';
-  document.getElementById('uf-password').value = '';
-  document.getElementById('uf-role').value = u ? u.role || 'customer' : 'admin';
-  document.getElementById('user-form-title').textContent = u ? 'Edit User' : 'Add User';
-  document.getElementById('user-form-card').style.display = 'block';
-}
-
-function closeUserForm() {
-  document.getElementById('user-form-card').style.display = 'none';
-}
-
-function editUserById(id) {
-  const u = users.find(x => x.id === id);
-  if (u) openUserForm(u);
-}
-
-function editUser(u) {
-  openUserForm(u);
-}
-
+function openUserForm() { document.getElementById('user-form-card').style.display = 'block'; }
+function closeUserForm() { document.getElementById('user-form-card').style.display = 'none'; }
 async function saveUser() {
-  const id = document.getElementById('uf-edit-id').value;
-
   const payload = {
     name: document.getElementById('uf-name').value.trim(),
     email: document.getElementById('uf-email').value.trim(),
-    phone: document.getElementById('uf-phone').value.trim(),
     password: document.getElementById('uf-password').value,
     role: document.getElementById('uf-role').value
   };
-
-  if (!payload.name || !payload.email) {
-    toast('Name and email are required.', 'danger');
-    return;
-  }
-
-  if (!id && !payload.password) {
-    toast('Password is required for new users.', 'danger');
-    return;
-  }
-
+  if (!payload.name || !payload.email || !payload.password) { toast('All fields required.', 'danger'); return; }
   try {
-    if (id) {
-      await api(`/api/admin/users/${id}`, {
-        method: 'PATCH',
-        body: JSON.stringify(payload)
-      });
-    } else {
-      await api('/api/admin/users', {
-        method: 'POST',
-        body: JSON.stringify(payload)
-      });
-    }
-
-    toast('User saved!', 'success');
+    await api('/api/admin/users', { method: 'POST', body: JSON.stringify(payload) });
+    toast('User created!', 'success');
     closeUserForm();
-
     users = await api('/api/admin/users').catch(() => users);
-    customers = await api('/api/admin/customers').catch(() => customers);
-
     renderUsersTable();
-    renderCustomersTable();
-    fillPosCustomers();
-  } catch(e) {
-    toast('Error: ' + e.message, 'danger');
-  }
+  } catch(e) { toast('Error: ' + e.message, 'danger'); }
 }
-
 async function deleteUser(id) {
   if (!confirm('Delete this user?')) return;
-
   try {
     await api(`/api/admin/users/${id}`, { method: 'DELETE' });
-
     users = users.filter(u => u.id !== id);
     customers = customers.filter(c => c.id !== id);
-
     renderUsersTable();
     renderCustomersTable();
-    fillPosCustomers();
-
     toast('User deleted.', 'success');
-  } catch(e) {
-    toast('Error: ' + e.message, 'danger');
-  }
+  } catch(e) { toast('Error: ' + e.message, 'danger'); }
 }
 
 // ── Sales History ──
@@ -1363,11 +1296,28 @@ function fmtDate(dt) {
 
 // ── Boot ──
 (async function boot() {
-  const savedToken = localStorage.getItem('tm_auth_token');
-  if (!savedToken) { showLogin(); return; }
+  const savedToken =
+    localStorage.getItem('tm_auth_token') ||
+    localStorage.getItem('thushanAdminToken') ||
+    localStorage.getItem('thushanUserToken') ||
+    '';
+
+  if (!savedToken) {
+    showLogin();
+    return;
+  }
+
   authToken = savedToken;
+
   try {
-    await api('/api/auth/me');
+    const me = await api('/api/auth/me');
+
+    if (!me.user || me.user.role !== 'admin') {
+      adminLogout();
+      showLogin();
+      return;
+    }
+
     await syncAll();
   } catch {
     showLogin();
