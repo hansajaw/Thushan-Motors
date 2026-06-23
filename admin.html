@@ -24,10 +24,11 @@ h1,h2,h3,h4,h5,h6 { font-family: 'Montserrat', sans-serif; font-weight: 700; }
 
 
 .sidebar { width: 260px; background: var(--bg2); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: fixed; top: 0; bottom: 0; left: 0; z-index: 100; transition: transform 0.3s ease; overflow-y: auto; }
-.sidebar-brand { padding: 22px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
-.sidebar-brand i { color: var(--red); font-size: 22px; }
-.sidebar-brand h2 { font-size: 17px; text-transform: uppercase; letter-spacing: 1px; }
-.sidebar-brand span { color: var(--red); }
+.sidebar-brand { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+.sidebar-brand img.tm-logo { width: 44px; height: 44px; object-fit: contain; flex-shrink: 0; }
+.sidebar-brand-text h2 { font-size: 15px; text-transform: uppercase; letter-spacing: 1px; line-height: 1.2; }
+.sidebar-brand-text span { color: var(--red); }
+.sidebar-brand-text p { font-size: 11px; color: var(--text3); margin-top: 2px; }
 .sidebar-menu { list-style: none; padding: 12px 0; flex: 1; }
 .sidebar-menu li { padding: 3px 12px; }
 .sidebar-menu a { display: flex; align-items: center; gap: 10px; padding: 10px 14px; color: var(--text2); text-decoration: none; border-radius: 8px; font-weight: 500; transition: all 0.2s; font-size: 13.5px; }
@@ -208,8 +209,11 @@ input:checked + .slider:before { transform: translateX(20px); }
 <div class="admin-container">
   <aside class="sidebar">
     <div class="sidebar-brand">
-      <i class="fa-solid fa-gear"></i>
-      <h2>Thushan <span>Admin</span></h2>
+      <img src="Images/Logo/tmLogo.png" alt="Thushan Motors" class="tm-logo">
+      <div class="sidebar-brand-text">
+        <h2>Thushan <span>Motors</span></h2>
+        <p>Admin Panel</p>
+      </div>
     </div>
     <ul class="sidebar-menu">
       <li class="active" id="li-dashboard"><a href="#" onclick="switchTab('dashboard');return false"><i class="fa-solid fa-chart-pie"></i> Dashboard</a></li>
@@ -223,7 +227,7 @@ input:checked + .slider:before { transform: translateX(20px); }
       <li id="li-messages"><a href="#" onclick="switchTab('messages');return false"><i class="fa-solid fa-envelope-open-text"></i> Messages</a></li>
     </ul>
     <div class="sidebar-footer">
-      <a href="/" target="_blank" class="btn-logout btn-visit"><i class="fa-solid fa-globe"></i> Visit Live Site</a>
+      <a href="index.html" target="_blank" class="btn-logout btn-visit"><i class="fa-solid fa-globe"></i> Visit Live Site</a>
       <button class="btn-logout" onclick="adminLogout()"><i class="fa-solid fa-power-off"></i> Logout</button>
     </div>
   </aside>
@@ -239,7 +243,7 @@ input:checked + .slider:before { transform: translateX(20px); }
           <p>Real-time overview of sales, revenue, and inventory.</p>
         </div>
         <div class="header-actions">
-          <a href="/" target="_blank" class="btn-secondary"><i class="fa-solid fa-globe"></i> Live Site</a>
+          <a href="index.html" target="_blank" class="btn-secondary"><i class="fa-solid fa-globe"></i> Live Site</a>
           <button class="btn-primary" onclick="syncAll()"><i class="fa-solid fa-rotate"></i> Sync Data</button>
         </div>
       </div>
@@ -350,10 +354,6 @@ input:checked + .slider:before { transform: translateX(20px); }
             <label class="toggle"><input type="checkbox" id="pf-featured"><span class="slider"></span></label>
             <span class="toggle-label">Featured</span>
           </div>
-          <div class="toggle-wrap" style="margin-left:24px">
-            <label class="toggle"><input type="checkbox" id="pf-free-delivery"><span class="slider"></span></label>
-            <span class="toggle-label">Free Delivery</span>
-          </div>
         </div>
         <input type="hidden" id="pf-edit-id">
         <input type="hidden" id="pf-img-base64">
@@ -440,18 +440,19 @@ input:checked + .slider:before { transform: translateX(20px); }
         <button class="btn-primary" onclick="openUserForm()"><i class="fa-solid fa-user-shield"></i> Add User</button>
       </div>
       <div class="table-container" id="user-form-card" style="display:none;padding:24px">
-        <h3 style="margin-bottom:18px">Add Admin User</h3>
+        <h3 style="margin-bottom:18px">Add System User</h3>
         <div class="form-grid">
-          <div class="form-group"><label>Full Name *</label><input type="text" id="uf-name" required></div>
-          <div class="form-group"><label>Email *</label><input type="email" id="uf-email" required></div>
-          <div class="form-group"><label>Password *</label><input type="password" id="uf-password" required></div>
+          <div class="form-group"><label>Full Name *</label><input type="text" id="uf-name" placeholder="e.g. Kasun Perera" required></div>
+          <div class="form-group"><label>Email *</label><input type="email" id="uf-email" placeholder="e.g. kasun@example.com" required></div>
+          <div class="form-group"><label>Password *</label><input type="password" id="uf-password" placeholder="Set a password for this user"></div>
           <div class="form-group"><label>Role</label>
             <select id="uf-role"><option value="admin">Admin</option><option value="customer">Customer</option></select>
           </div>
         </div>
+        <p style="font-size:12px;color:var(--text3);margin-bottom:14px"><i class="fa-solid fa-circle-info" style="color:var(--blue)"></i> Leave password blank to auto-generate a temporary one (shown after saving).</p>
         <div style="display:flex;gap:10px;justify-content:flex-end">
           <button class="btn-secondary" onclick="closeUserForm()">Cancel</button>
-          <button class="btn-primary" onclick="saveUser()"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+          <button class="btn-primary" onclick="saveUser()"><i class="fa-solid fa-floppy-disk"></i> Save User</button>
         </div>
       </div>
       <div class="table-container">
@@ -706,7 +707,7 @@ function closeSidebar() { document.querySelector('.sidebar').classList.remove('m
 // ── Sync all data ──
 async function syncAll() {
   try {
-    const [p, s, c, u, sl, m] = await Promise.all([
+    const [p, sa, c, u, sl, m] = await Promise.all([
       api('/api/products').catch(() => []),
       api('/api/admin/sales').catch(() => []),
       api('/api/admin/customers').catch(() => []),
@@ -714,16 +715,17 @@ async function syncAll() {
       api('/api/admin/suppliers').catch(() => []),
       api('/api/admin/messages').catch(() => [])
     ]);
-    products = Array.isArray(p) ? p : [];
-    sales = Array.isArray(s) ? s : [];
-    customers = Array.isArray(c) ? c : [];
-    users = Array.isArray(u) ? u : [];
+    products  = Array.isArray(p)  ? p  : [];
+    sales     = Array.isArray(sa) ? sa : [];
+    customers = Array.isArray(c)  ? c  : [];
+    users     = Array.isArray(u)  ? u  : [];
     suppliers = Array.isArray(sl) ? sl : [];
-    messages = Array.isArray(m) ? m : [];
+    messages  = Array.isArray(m)  ? m  : [];
     renderAll();
     toast('Data synced.', 'success');
   } catch(e) {
-    toast('Sync failed: ' + e.message, 'danger');
+    toast('Sync failed: ' + (e.message || 'Connection error. Check if backend is running.'), 'danger');
+    renderAll(); // still render with whatever data we have
   }
 }
 
@@ -741,11 +743,14 @@ function renderAll() {
 
 // ── Dashboard ──
 function renderDashboard() {
-  const today = new Date().toISOString().substring(0,10);
+  const today = new Date();
+  const todayStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
   let todayCnt = 0, totalRev = 0;
   sales.forEach(s => {
-    totalRev += Number(s.total || 0);
-    if (String(s.createdAt || '').substring(0,10) === today) todayCnt++;
+    const amt = Number(s.total || 0);
+    totalRev += amt;
+    const sDate = s.createdAt ? String(s.createdAt).substring(0,10) : '';
+    if (sDate === todayStr) todayCnt++;
   });
   document.getElementById('stat-today').textContent = todayCnt;
   document.getElementById('stat-revenue').textContent = 'Rs. ' + totalRev.toLocaleString('en-US', {minimumFractionDigits:2});
@@ -754,12 +759,13 @@ function renderDashboard() {
 
   const tbody = document.getElementById('dash-recent-tbody');
   tbody.innerHTML = '';
-  const recent = [...sales].reverse().slice(0, 6);
-  if (!recent.length) { tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text3)">No orders yet.</td></tr>`; return; }
+  // Sort by id DESC (most recent first) then take top 6
+  const recent = [...sales].sort((a,b) => (b.id||0) - (a.id||0)).slice(0, 6);
+  if (!recent.length) { tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:20px">No orders yet.</td></tr>`; return; }
+  const statusMap = { pending:'info', confirmed:'info', packed:'orange', shipped:'orange', delivered:'success', cancelled:'danger' };
   recent.forEach(s => {
-    const statusMap = { pending:'info', confirmed:'info', packed:'orange', shipped:'orange', delivered:'success', cancelled:'danger' };
     tbody.innerHTML += `<tr>
-      <td><strong>${s.orderNumber || '#'+s.id}</strong></td>
+      <td><strong>${s.orderNumber || 'TM-'+String(s.id).padStart(5,'0')}</strong></td>
       <td>${s.customerName || 'Guest'}</td>
       <td>${fmtDate(s.createdAt)}</td>
       <td style="color:var(--green);font-weight:600">Rs. ${Number(s.total||0).toFixed(2)}</td>
@@ -771,10 +777,10 @@ function renderDashboard() {
 // ── POS ──
 function fillPosCustomers() {
   const sel = document.getElementById('pos-customer');
-  sel.innerHTML = '<option value="Walk-In">Walk-In Customer</option>';
+  sel.innerHTML = '<option value="walk-in">Walk-In Customer</option>';
   customers.forEach(c => {
     const opt = document.createElement('option');
-    opt.value = c.name;
+    opt.value = c.id;          // use numeric ID so /api/admin/orders gets customerId
     opt.textContent = `${c.name} (${c.phone || c.email || ''})`;
     sel.appendChild(opt);
   });
@@ -842,29 +848,42 @@ function removeFromCart(idx) { posCart.splice(idx, 1); updateCartTotals(); }
 
 async function checkoutPOS() {
   if (!posCart.length) { toast('Cart is empty.', 'danger'); return; }
-  let sub = posCart.reduce((s, i) => s + Number(i.price) * i.qty, 0);
-  const disc = parseFloat(document.getElementById('pos-discount').value) || 0;
-  const discAmt = sub * disc / 100;
-  const grand = sub - discAmt;
-  const custName = document.getElementById('pos-customer').value;
 
-  // Build order payload for existing user or walk-in
-  // For POS we POST to /api/admin/sales directly
+  const disc = parseFloat(document.getElementById('pos-discount').value) || 0;
+  const custVal = document.getElementById('pos-customer').value;
+
+  let customerId = null;
+
+  if (custVal === 'walk-in') {
+    // Auto-create a walk-in customer record so /api/admin/orders gets a valid user_id
+    try {
+      const walkin = await api('/api/admin/customers', {
+        method: 'POST',
+        body: JSON.stringify({ name: 'Walk-In Customer' })
+      });
+      customerId = walkin.id;
+    } catch(e) {
+      toast('Could not create walk-in customer: ' + e.message, 'danger');
+      return;
+    }
+  } else {
+    customerId = Number(custVal);
+    if (!customerId) { toast('Please select a customer.', 'danger'); return; }
+  }
+
   const payload = {
-    customerName: custName,
-    itemsCount: posCart.reduce((s, i) => s + i.qty, 0),
-    total: grand,
-    subtotal: sub,
-    discount: discAmt,
-    date: new Date().toISOString(),
-    items: posCart.map(i => ({ productId: i.id, name: i.name, price: i.price, quantity: i.qty, subtotal: Number(i.price)*i.qty }))
+    customerId,
+    discount: disc,
+    paymentMethod: 'cash_on_delivery',
+    items: posCart.map(i => ({ productId: i.id, quantity: i.qty }))
   };
 
   try {
-    await api('/api/admin/sales', { method: 'POST', body: JSON.stringify(payload) });
-    toast('Invoice saved!', 'success');
+    await api('/api/admin/orders', { method: 'POST', body: JSON.stringify(payload) });
+    toast('Invoice saved successfully!', 'success');
   } catch(e) {
-    toast('Saved locally (offline mode).', 'info');
+    toast('Checkout failed: ' + (e.message || 'Unknown error'), 'danger');
+    return;
   }
 
   posCart = [];
@@ -927,7 +946,6 @@ function openProductForm(p = null) {
   document.getElementById('pf-img-url').value = p ? (p.img || '') : '';
   document.getElementById('pf-stock').checked = p ? p.stock : true;
   document.getElementById('pf-featured').checked = p ? p.featured : false;
-  document.getElementById('pf-free-delivery').checked = p ? p.freeDelivery : false;
   document.getElementById('pf-img-base64').value = '';
   document.getElementById('pf-img-preview-box').style.display = 'none';
   if (p && p.img) {
@@ -978,7 +996,7 @@ async function saveProduct() {
     img: imgB64 || imgUrl || '',
     stock: document.getElementById('pf-stock').checked,
     featured: document.getElementById('pf-featured').checked,
-    freeDelivery: document.getElementById('pf-free-delivery').checked
+    freeDelivery: false
   };
 
   try {
@@ -1079,12 +1097,12 @@ function renderCustomersTable() {
   if (!filtered.length) { tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text3)">No customers found.</td></tr>`; return; }
   filtered.forEach((c, i) => {
     tbody.innerHTML += `<tr>
-      <td><strong>#${c.id || i+1}</strong></td>
+      <td><strong>#${i+1}</strong></td>
       <td>${c.name}</td>
       <td>${c.phone || '—'}</td>
       <td>${c.email || '—'}</td>
       <td>${fmtDate(c.createdAt)}</td>
-      <td><button class="btn-icon delete" title="Delete" onclick="deleteUser(${c.id})"><i class="fa-solid fa-user-xmark"></i></button></td>
+      <td><button class="btn-icon delete" title="Delete" onclick="deleteCustomer(${c.id})"><i class="fa-solid fa-user-xmark"></i></button></td>
     </tr>`;
   });
 }
@@ -1098,7 +1116,7 @@ function renderUsersTable() {
     const roleBadge = u.role === 'admin' ? `<span class="badge purple">Admin</span>` : `<span class="badge info">Customer</span>`;
     const verBadge = u.emailVerified ? `<span class="badge success">Yes</span>` : `<span class="badge danger">No</span>`;
     tbody.innerHTML += `<tr>
-      <td><strong>#${u.id || i+1}</strong></td>
+      <td><strong>#${i+1}</strong></td>
       <td>${u.name}</td>
       <td>${u.email}</td>
       <td>${roleBadge}</td>
@@ -1111,31 +1129,49 @@ function renderUsersTable() {
 function openUserForm() { document.getElementById('user-form-card').style.display = 'block'; }
 function closeUserForm() { document.getElementById('user-form-card').style.display = 'none'; }
 async function saveUser() {
+  const typedPass = (document.getElementById('uf-password')?.value || '').trim();
+  const autoPass = typedPass || (Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-4).toUpperCase() + '1!');
   const payload = {
     name: document.getElementById('uf-name').value.trim(),
     email: document.getElementById('uf-email').value.trim(),
-    password: document.getElementById('uf-password').value,
+    password: autoPass,
     role: document.getElementById('uf-role').value
   };
-  if (!payload.name || !payload.email || !payload.password) { toast('All fields required.', 'danger'); return; }
+  if (!payload.name || !payload.email) { toast('Name and email are required.', 'danger'); return; }
   try {
     await api('/api/admin/users', { method: 'POST', body: JSON.stringify(payload) });
-    toast('User created!', 'success');
+    if (!typedPass) {
+      toast('User created! Temporary password: ' + autoPass, 'info');
+    } else {
+      toast('User created successfully!', 'success');
+    }
+    // Reset form
+    document.getElementById('uf-name').value = '';
+    document.getElementById('uf-email').value = '';
+    if (document.getElementById('uf-password')) document.getElementById('uf-password').value = '';
     closeUserForm();
     users = await api('/api/admin/users').catch(() => users);
     renderUsersTable();
   } catch(e) { toast('Error: ' + e.message, 'danger'); }
 }
 async function deleteUser(id) {
-  if (!confirm('Delete this user?')) return;
+  if (!confirm('Delete this system user?')) return;
   try {
     await api(`/api/admin/users/${id}`, { method: 'DELETE' });
     users = users.filter(u => u.id !== id);
-    customers = customers.filter(c => c.id !== id);
     renderUsersTable();
-    renderCustomersTable();
     toast('User deleted.', 'success');
-  } catch(e) { toast('Error: ' + e.message, 'danger'); }
+  } catch(e) { toast('Delete failed: ' + e.message, 'danger'); }
+}
+
+async function deleteCustomer(id) {
+  if (!confirm('Delete this customer? This will also remove their order history.')) return;
+  try {
+    await api(`/api/admin/customers/${id}`, { method: 'DELETE' });
+    customers = customers.filter(c => c.id !== id);
+    renderCustomersTable();
+    toast('Customer deleted.', 'success');
+  } catch(e) { toast('Delete failed: ' + e.message, 'danger'); }
 }
 
 // ── Sales History ──
@@ -1150,13 +1186,20 @@ function renderSalesTable() {
   );
   if (!filtered.length) { tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--text3)">No orders found.</td></tr>`; return; }
   const statusMap = { pending:'info', confirmed:'info', packed:'orange', shipped:'orange', delivered:'success', cancelled:'danger' };
-  [...filtered].reverse().forEach(s => {
+  // Sort most recent first
+  [...filtered].sort((a,b) => (b.id||0) - (a.id||0)).forEach((s, idx) => {
     const pmBadge = s.paymentMethod === 'cash_on_delivery' ? `<span class="badge info">COD</span>` : s.paymentMethod === 'bank_transfer' ? `<span class="badge purple">Bank</span>` : `<span class="badge success">Card</span>`;
+    // Calculate items count safely
+    let itmCount = Number(s.itemsCount || 0);
+    if (!itmCount && Array.isArray(s.items) && s.items.length) {
+      itmCount = s.items.reduce((a, i) => a + Number(i.quantity || i.qty || 1), 0);
+    }
+    const itmDisplay = itmCount > 0 ? itmCount : '—';
     tbody.innerHTML += `<tr>
-      <td><strong>${s.orderNumber || '#'+s.id}</strong></td>
+      <td><strong>${s.orderNumber || 'TM-'+String(s.id).padStart(5,'0')}</strong></td>
       <td>${fmtDate(s.createdAt)}</td>
       <td>${s.customerName || 'Guest'}</td>
-      <td style="text-align:center"><strong>${s.itemsCount || (Array.isArray(s.items) ? s.items.reduce((a,i)=>a+(i.quantity||i.qty||1),0) : '—')}</strong></td>
+      <td style="text-align:center"><strong>${itmDisplay}</strong></td>
       <td style="color:var(--green);font-weight:700">Rs. ${Number(s.total||0).toFixed(2)}</td>
       <td>${pmBadge}</td>
       <td><span class="badge ${statusMap[s.status]||'info'}">${s.status||'pending'}</span></td>

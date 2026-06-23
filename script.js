@@ -45,12 +45,12 @@ async function loadProductsFromServer() {
 
 /* ── MOTORCYCLE BRANDS ── */
 const brands = [
-  {name:'Honda', logo:'Images/Brands/honda.png'},
-  {name:'Yamaha', logo:'Images/Brands/yamaha.png'},
-  {name:'Bajaj', logo:'Images/Brands/bajaj.png'},
-  {name:'TVS', logo:'Images/Brands/tvs.png'},
-  {name:'Hero', logo:'Images/Brands/hero.png'},
-  {name:'Suzuki', logo:'Images/Brands/suzuki.png'}
+  {name:'Honda', logo:'images/brands/honda.png'},
+  {name:'Yamaha', logo:'images/brands/yamaha.png'},
+  {name:'Bajaj', logo:'images/brands/bajaj.png'},
+  {name:'TVS', logo:'images/brands/tvs.png'},
+  {name:'Hero', logo:'images/brands/hero.png'},
+  {name:'Suzuki', logo:'images/brands/suzuki.png'}
 ];
 
 /* ── SETTINGS ── */
@@ -311,9 +311,18 @@ function updateNavAuth(){
     if(nameEl){
       nameEl.textContent = (user.name || 'User').split(' ')[0];
     }
+
+    // Show Admin Panel button only for admin users
+    const adminBtn = $('adminPanelBtn');
+    if(adminBtn){
+      adminBtn.style.display = (user.role === 'admin') ? 'inline-flex' : 'none';
+    }
   }else{
     guest.classList.remove('hidden');
     userInfo.classList.add('hidden');
+
+    const adminBtn = $('adminPanelBtn');
+    if(adminBtn) adminBtn.style.display = 'none';
   }
 }
 
@@ -355,13 +364,9 @@ function ensureAuthExtraUI(){
           <div class="auth-logo-icon">
             <i class="fa-solid fa-envelope-circle-check"></i>
           </div>
-            <h2>Verify Email</h2>
-            <p>Enter the 6-digit OTP sent to your email.</p>
 
-            <div class="otp-spam-note">
-              <i class="fa-solid fa-circle-info"></i>
-              <span>If you don't see the OTP in your inbox, please check your Spam/Junk folder.</span>
-            </div>
+          <h2>Verify Email</h2>
+          <p>Enter the 6-digit OTP sent to your email.</p>
         </div>
 
         <div class="form-group">
@@ -699,7 +704,7 @@ async function resendOtp(){
       return;
     }
 
-    showToast('📧 New OTP sent. Check Inbox or Spam/Junk folder.');
+    showToast('📧 New OTP sent to your email.');
   }catch(err){
     console.error('Resend OTP error:', err);
     showToast('⚠️ Failed to resend OTP.');
@@ -831,7 +836,7 @@ async function doRegister(){
 
     if(data.needsVerification){
       switchToOtp(data.email || email);
-      showToast('📧 OTP sent to your email. Check Inbox or Spam/Junk folder.');
+      showToast('📧 OTP sent to your email. Please verify your account.');
 
       ['regPassword','regConfirm'].forEach(function(id){
         if($(id)){

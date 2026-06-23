@@ -18,7 +18,7 @@
   <nav class="navbar">
     <a class="nav-logo" href="index.html">
       <div class="logo-mark">
-        <img src="Images/Logo/tmLogo.png" alt="Thushan Motors Logo">
+        <img src="images/Logo/tmLogo.png" alt="Thushan Motors Logo">
       </div>
       <div class="brand-name"><span>THUSHAN</span> MOTORS</div>
     </a>
@@ -86,6 +86,10 @@
       <div id="userInfo" class="user-info hidden">
         <div class="user-avatar-nav" id="userAvatarNav">U</div>
         <span class="user-name-nav" id="userNameNav">User</span>
+
+        <a id="adminPanelBtn" href="admin.html" class="btn-red" style="display:none;text-decoration:none;font-size:11px;padding:7px 12px;border-radius:8px;align-items:center;gap:5px">
+          <i class="fa-solid fa-gear" style="font-size:11px"></i> Admin
+        </a>
 
         <button class="btn-logout" onclick="doLogout()">
           <i class="fa-solid fa-right-from-bracket" style="font-size:11px"></i> Logout
