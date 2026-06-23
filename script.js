@@ -352,9 +352,13 @@ function ensureAuthExtraUI(){
           <div class="auth-logo-icon">
             <i class="fa-solid fa-envelope-circle-check"></i>
           </div>
+            <h2>Verify Email</h2>
+            <p>Enter the 6-digit OTP sent to your email.</p>
 
-          <h2>Verify Email</h2>
-          <p>Enter the 6-digit OTP sent to your email.</p>
+            <div class="otp-spam-note">
+              <i class="fa-solid fa-circle-info"></i>
+              <span>If you don't see the OTP in your inbox, please check your Spam/Junk folder.</span>
+            </div>
         </div>
 
         <div class="form-group">
