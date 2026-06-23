@@ -1355,11 +1355,89 @@ app.post('/api/admin/users', requireAdmin, asyncHandler(async (req, res) => {
 }));
 
 app.delete('/api/admin/users/:id', requireAdmin, asyncHandler(async (req, res) => {
-  const [result] = await getPool().query('DELETE FROM users WHERE id = ? AND role != "admin"', [Number(req.params.id)]);
-  if (!result.affectedRows) return res.status(404).json({ message: 'User not found or cannot delete admin.' });
-  res.json({ message: 'User deleted.' });
-}));
+  const id = Number(req.params.id);
 
+  if (!id) {
+    return res.status(400).json({ message: 'Invalid user id.' });
+  }
+
+  if (req.user && Number(req.user.id) === id) {
+    return res.status(400).json({ message: 'You cannot delete your own admin account.' });
+  }
+
+  const pool = getPool();
+  const connection = await pool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    const [userRows] = await connection.query(
+      'SELECT id, role FROM users WHERE id = ? LIMIT 1',
+      [id]
+    );
+
+    const user = userRows[0];
+
+    if (!user) {
+      await connection.rollback();
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    if (user.role === 'admin') {
+      await connection.rollback();
+      return res.status(400).json({ message: 'Admin users cannot be deleted.' });
+    }
+
+    const [orderRows] = await connection.query(
+      'SELECT id FROM orders WHERE user_id = ?',
+      [id]
+    );
+
+    const orderIds = orderRows.map(o => o.id);
+
+    if (orderIds.length) {
+      const placeholders = orderIds.map(() => '?').join(',');
+
+      await connection.query(
+        `DELETE FROM order_items WHERE order_id IN (${placeholders})`,
+        orderIds
+      );
+
+      await connection.query(
+        `DELETE FROM orders WHERE id IN (${placeholders})`,
+        orderIds
+      );
+    }
+
+    await connection.query(
+      'DELETE FROM reviews WHERE user_id = ?',
+      [id]
+    );
+
+    const [result] = await connection.query(
+      'DELETE FROM users WHERE id = ? AND role = ?',
+      [id, 'customer']
+    );
+
+    if (!result.affectedRows) {
+      await connection.rollback();
+      return res.status(404).json({ message: 'Customer not found.' });
+    }
+
+    await connection.commit();
+
+    res.json({ message: 'User deleted.' });
+  } catch (err) {
+    await connection.rollback();
+    console.error('Delete user error:', err);
+    res.status(500).json({
+      message: 'Could not delete user.',
+      error: err.message
+    });
+  } finally {
+    connection.release();
+  }
+}));
 // ─── ADMIN: SUPPLIERS ─────────────────────────────────────────────────────────
 app.get('/api/admin/suppliers', requireAdmin, asyncHandler(async (req, res) => {
   const [rows] = await getPool().query('SELECT * FROM suppliers ORDER BY id DESC');
@@ -1399,6 +1477,128 @@ app.delete('/api/admin/suppliers/:id', requireAdmin, asyncHandler(async (req, re
   const [result] = await getPool().query('DELETE FROM suppliers WHERE id = ?', [Number(req.params.id)]);
   if (!result.affectedRows) return res.status(404).json({ message: 'Supplier not found.' });
   res.json({ message: 'Supplier deleted.' });
+}));
+
+// ─── ADMIN: UPDATE CUSTOMER ─────────────────────────────
+app.patch('/api/admin/customers/:id', requireAdmin, asyncHandler(async (req, res) => {
+  const id = Number(req.params.id);
+  const { name, phone = '', email = '' } = req.body;
+
+  if (!name || !String(name).trim()) {
+    return res.status(400).json({ message: 'Customer name is required.' });
+  }
+
+  if (email && !validateEmail(email)) {
+    return res.status(400).json({ message: 'Invalid email address.' });
+  }
+
+  const [result] = await getPool().query(
+    `UPDATE users
+     SET name = ?, phone = ?, email = ?
+     WHERE id = ? AND role = 'customer'`,
+    [
+      String(name).trim(),
+      String(phone).trim(),
+      String(email).trim().toLowerCase(),
+      id
+    ]
+  );
+
+  if (!result.affectedRows) {
+    return res.status(404).json({ message: 'Customer not found.' });
+  }
+
+  res.json({ message: 'Customer updated.' });
+}));
+
+// ─── ADMIN: UPDATE USER ─────────────────────────────
+app.patch('/api/admin/users/:id', requireAdmin, asyncHandler(async (req, res) => {
+  const id = Number(req.params.id);
+  const { name, email, phone = '', role = 'customer', password = '' } = req.body;
+
+  if (!name || !email) {
+    return res.status(400).json({ message: 'Name and email are required.' });
+  }
+
+  if (!validateEmail(email)) {
+    return res.status(400).json({ message: 'Invalid email address.' });
+  }
+
+  const allowedRoles = ['admin', 'customer'];
+  if (!allowedRoles.includes(role)) {
+    return res.status(400).json({ message: 'Invalid role.' });
+  }
+
+  const params = [
+    String(name).trim(),
+    String(email).trim().toLowerCase(),
+    String(phone).trim(),
+    role
+  ];
+
+  let sql = `
+    UPDATE users
+    SET name = ?, email = ?, phone = ?, role = ?
+  `;
+
+  if (password && String(password).trim().length > 0) {
+    if (String(password).length < 8) {
+      return res.status(400).json({ message: 'Password must be at least 8 characters.' });
+    }
+
+    const { hashPassword: hp } = require('./utils/password');
+    sql += `, password_hash = ?`;
+    params.push(hp(password));
+  }
+
+  sql += ` WHERE id = ?`;
+  params.push(id);
+
+  const [result] = await getPool().query(sql, params);
+
+  if (!result.affectedRows) {
+    return res.status(404).json({ message: 'User not found.' });
+  }
+
+  res.json({ message: 'User updated.' });
+}));
+
+// ─── ADMIN: DELETE ORDER / SALE ─────────────────────────────
+app.delete('/api/admin/orders/:id', requireAdmin, asyncHandler(async (req, res) => {
+  const id = Number(req.params.id);
+
+  const [result] = await getPool().query(
+    'DELETE FROM orders WHERE id = ?',
+    [id]
+  );
+
+  if (!result.affectedRows) {
+    return res.status(404).json({ message: 'Order not found.' });
+  }
+
+  res.json({ message: 'Order deleted.' });
+}));
+
+// ─── ADMIN: MESSAGE STATUS UPDATE ─────────────────────────────
+app.patch('/api/admin/messages/:id/status', requireAdmin, asyncHandler(async (req, res) => {
+  const id = Number(req.params.id);
+  const { status = 'read' } = req.body;
+
+  const allowed = ['new', 'read', 'replied'];
+  if (!allowed.includes(status)) {
+    return res.status(400).json({ message: 'Invalid message status.' });
+  }
+
+  const [result] = await getPool().query(
+    'UPDATE messages SET status = ? WHERE id = ?',
+    [status, id]
+  );
+
+  if (!result.affectedRows) {
+    return res.status(404).json({ message: 'Message not found.' });
+  }
+
+  res.json({ message: 'Message status updated.' });
 }));
 
 // Only serve index.html for HTML page routes, not asset requests
