@@ -2343,31 +2343,6 @@ footer{
   color:var(--red);
 }
 
-.otp-spam-note{
-  margin-top:12px;
-  padding:10px 12px;
-  border-radius:9px;
-  background:rgba(220,38,38,0.06);
-  border:1px solid rgba(220,38,38,0.18);
-  color:var(--muted);
-  font-size:12.5px;
-  line-height:1.45;
-  display:flex;
-  align-items:flex-start;
-  gap:8px;
-  text-align:left;
-}
-
-.otp-spam-note i{
-  color:var(--red);
-  margin-top:2px;
-  font-size:13px;
-}
-
-.otp-spam-note span{
-  flex:1;
-}
-
 /* ══ CHECKOUT SUCCESS ══ */
 .checkout-success{
   text-align:center;
