@@ -311,18 +311,9 @@ function updateNavAuth(){
     if(nameEl){
       nameEl.textContent = (user.name || 'User').split(' ')[0];
     }
-
-    // Show Admin Panel button only for admin users
-    const adminBtn = $('adminPanelBtn');
-    if(adminBtn){
-      adminBtn.style.display = (user.role === 'admin') ? 'inline-flex' : 'none';
-    }
   }else{
     guest.classList.remove('hidden');
     userInfo.classList.add('hidden');
-
-    const adminBtn = $('adminPanelBtn');
-    if(adminBtn) adminBtn.style.display = 'none';
   }
 }
 

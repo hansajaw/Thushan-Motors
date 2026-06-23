@@ -87,10 +87,6 @@
         <div class="user-avatar-nav" id="userAvatarNav">U</div>
         <span class="user-name-nav" id="userNameNav">User</span>
 
-        <a id="adminPanelBtn" href="admin.html" class="btn-red" style="display:none;text-decoration:none;font-size:11px;padding:7px 12px;border-radius:8px;align-items:center;gap:5px">
-          <i class="fa-solid fa-gear" style="font-size:11px"></i> Admin
-        </a>
-
         <button class="btn-logout" onclick="doLogout()">
           <i class="fa-solid fa-right-from-bracket" style="font-size:11px"></i> Logout
         </button>
