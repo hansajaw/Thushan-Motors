@@ -1438,11 +1438,89 @@ app.post('/api/admin/users', requireAdmin, asyncHandler(async (req, res) => {
 }));
 
 app.delete('/api/admin/users/:id', requireAdmin, asyncHandler(async (req, res) => {
-  const [result] = await getPool().query('DELETE FROM users WHERE id = ? AND role != "admin"', [Number(req.params.id)]);
-  if (!result.affectedRows) return res.status(404).json({ message: 'User not found or cannot delete admin.' });
-  res.json({ message: 'User deleted.' });
-}));
+  const id = Number(req.params.id);
 
+  if (!id) {
+    return res.status(400).json({ message: 'Invalid user id.' });
+  }
+
+  if (req.user && Number(req.user.id) === id) {
+    return res.status(400).json({ message: 'You cannot delete your own admin account.' });
+  }
+
+  const pool = getPool();
+  const connection = await pool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    const [userRows] = await connection.query(
+      'SELECT id, role FROM users WHERE id = ? LIMIT 1',
+      [id]
+    );
+
+    const user = userRows[0];
+
+    if (!user) {
+      await connection.rollback();
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    if (user.role === 'admin') {
+      await connection.rollback();
+      return res.status(400).json({ message: 'Admin users cannot be deleted.' });
+    }
+
+    const [orderRows] = await connection.query(
+      'SELECT id FROM orders WHERE user_id = ?',
+      [id]
+    );
+
+    const orderIds = orderRows.map(o => o.id);
+
+    if (orderIds.length) {
+      const placeholders = orderIds.map(() => '?').join(',');
+
+      await connection.query(
+        `DELETE FROM order_items WHERE order_id IN (${placeholders})`,
+        orderIds
+      );
+
+      await connection.query(
+        `DELETE FROM orders WHERE id IN (${placeholders})`,
+        orderIds
+      );
+    }
+
+    await connection.query(
+      'DELETE FROM reviews WHERE user_id = ?',
+      [id]
+    );
+
+    const [result] = await connection.query(
+      'DELETE FROM users WHERE id = ? AND role = ?',
+      [id, 'customer']
+    );
+
+    if (!result.affectedRows) {
+      await connection.rollback();
+      return res.status(404).json({ message: 'Customer not found.' });
+    }
+
+    await connection.commit();
+
+    res.json({ message: 'User deleted.' });
+  } catch (err) {
+    await connection.rollback();
+    console.error('Delete user error:', err);
+    res.status(500).json({
+      message: 'Could not delete user.',
+      error: err.message
+    });
+  } finally {
+    connection.release();
+  }
+}));
 // ─── ADMIN: SUPPLIERS ─────────────────────────────────────────────────────────
 app.get('/api/admin/suppliers', requireAdmin, asyncHandler(async (req, res) => {
   const [rows] = await getPool().query('SELECT * FROM suppliers ORDER BY id DESC');
