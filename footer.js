@@ -11,7 +11,7 @@
 
     <div class="footer-brand">
       <div class="foot-logo">
-        <img src="images/Logo/tmLogo.png" alt="Thushan Motors Logo">
+        <img src="Images/Logo/tmLogo.png" alt="Thushan Motors Logo">
         <div><span>THUSHAN</span> MOTORS</div>
       </div>
 
