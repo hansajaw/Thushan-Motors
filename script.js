@@ -2240,7 +2240,7 @@ async function renderOrdersPage(){
 
         '<div class="receipt-header">' +
           '<div class="receipt-brand">' +
-            '<img src="images/Logo/tmLogo.png" alt="Thushan Motors Logo">' +
+            '<img src="Images/Logo/tmLogo.png" alt="Thushan Motors Logo">' +
             '<div>' +
               '<h2><span>THUSHAN</span> MOTORS</h2>' +
               '<p style="color:var(--muted);font-size:13px">Online Order Receipt</p>' +
