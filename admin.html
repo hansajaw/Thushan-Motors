@@ -552,11 +552,14 @@ let authToken =
   '';
 
 /* Backend API URL */
-// Auto-detect: local dev uses same origin (localhost:3000), production uses Vercel URL
+// Local admin uses localhost. Live admin uses the deployed backend URL.
 const ADMIN_API_BASE = (function(){
   const h = window.location.hostname;
-  if (h === 'localhost' || h === '127.0.0.1') return `http://${window.location.host}`;
-  if (h === 'thushanmotors.lk' || h === 'www.thushanmotors.lk') return '';
+
+  if (h === 'localhost' || h === '127.0.0.1') {
+    return 'http://localhost:3000';
+  }
+
   return 'https://thushan-motors.vercel.app';
 }());
 

@@ -4,17 +4,21 @@
 ══════════════════════════════════════ */
 
 /* ── API BASE URL ──
-   server.js serves BOTH the API (/api/...) AND these HTML/JS files from
-   the exact same Express app, so the shop pages and the backend are
-   ALWAYS on the same origin — this should stay '' (empty) unless you
-   deliberately host the frontend on a different domain than the backend.
+   Local development uses localhost.
+   Live website uses the deployed backend URL.
+
+   IMPORTANT:
+   www.thushanmotors.lk is your frontend/custom domain.
+   If the backend is deployed separately on Vercel, API calls must go to
+   https://thushan-motors.vercel.app instead of /api/... on the frontend domain.
 ── */
 const API_BASE = (function(){
   const h = window.location.hostname;
-  if (h === 'localhost' || h === '127.0.0.1') return 'http://localhost:3000';
-  // Same-origin: backend and frontend on the same server/domain
-  if (h === 'thushanmotors.lk' || h === 'www.thushanmotors.lk') return '';
-  // Vercel frontend talking to Vercel backend
+
+  if (h === 'localhost' || h === '127.0.0.1') {
+    return 'http://localhost:3000';
+  }
+
   return 'https://thushan-motors.vercel.app';
 }());
 
@@ -2236,7 +2240,7 @@ async function renderOrdersPage(){
 
         '<div class="receipt-header">' +
           '<div class="receipt-brand">' +
-            '<img src="images/Logo/tmLogo.png" alt="Thushan Motors Logo">' +
+            '<img src="Images/Logo/tmLogo.png" alt="Thushan Motors Logo">' +
             '<div>' +
               '<h2><span>THUSHAN</span> MOTORS</h2>' +
               '<p style="color:var(--muted);font-size:13px">Online Order Receipt</p>' +
